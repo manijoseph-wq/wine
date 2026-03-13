@@ -4,89 +4,73 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <title>Cave à Vin</title>
-
-  <!-- PWA / iPhone -->
   <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
   <meta name="apple-mobile-web-app-title" content="Cave à Vin"/>
-  <meta name="theme-color" content="#1a0f04"/>
-  <link rel="manifest" href="manifest.json"/>
-
-  <!-- Inline SVG icon as apple-touch-icon -->
-  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='38' fill='%231a0f04'/%3E%3Ccircle cx='96' cy='55' r='18' fill='%238B1A1A'/%3E%3Ccircle cx='76' cy='80' r='18' fill='%238B1A1A'/%3E%3Ccircle cx='116' cy='80' r='18' fill='%238B1A1A'/%3E%3Ccircle cx='56' cy='105' r='18' fill='%238B1A1A'/%3E%3Ccircle cx='96' cy='105' r='18' fill='%238B1A1A'/%3E%3Ccircle cx='136' cy='105' r='18' fill='%238B1A1A'/%3E%3Ccircle cx='76' cy='130' r='18' fill='%238B1A1A'/%3E%3Ccircle cx='116' cy='130' r='18' fill='%238B1A1A'/%3E%3Ccircle cx='96' cy='155' r='18' fill='%238B1A1A'/%3E%3Crect x='93' y='22' width='6' height='26' fill='%236B4226'/%3E%3Cellipse cx='104' cy='20' rx='10' ry='7' fill='%232D5A1B'/%3E%3C/svg%3E"/>
-
+  <meta name="theme-color" content="#ffffff"/>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
-
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{background:#0e0a05;color:#e8dcc8;font-family:'Cormorant Garamond',Georgia,serif}
-    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:#0e0a05}::-webkit-scrollbar-thumb{background:#1e160a;border-radius:3px}
-    .wc{transition:transform 0.2s,border-color 0.2s}.wc:hover{transform:translateY(-3px);border-color:rgba(201,168,76,0.28)!important}
-    select option{background:#1a1209}
-    input::placeholder{color:#3a2a15}
-    /* Safe area for iPhone notch */
+    @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    body{background:#f7f5f2;color:#1a1a1a;font-family:'DM Sans',sans-serif;min-height:100vh}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#ddd;border-radius:2px}
+    input,select,textarea{font-family:'DM Sans',sans-serif}
+    button{font-family:'DM Sans',sans-serif;cursor:pointer}
     #root{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
   </style>
 </head>
 <body>
 <div id="root"></div>
-
 <script type="text/babel">
-const { useState, useMemo, useRef, useCallback } = React;
+const { useState, useMemo, useRef, useCallback, useEffect } = React;
+
+const WINE_COLORS = {
+  Red: { bg:'#c0392b', light:'#fdf1f0', badge:'#c0392b' },
+  White: { bg:'#d4a017', light:'#fdfbf0', badge:'#b8860b' },
+  Sparkling: { bg:'#2980b9', light:'#f0f7fd', badge:'#2471a3' },
+  Rosé: { bg:'#e91e8c', light:'#fdf0f7', badge:'#c2185b' },
+  Dessert: { bg:'#8e44ad', light:'#f7f0fd', badge:'#7d3c98' },
+};
 
 const SAMPLE_WINES = [
-  { id: 1, name: "Château Margaux", producer: "Château Margaux", region: "Bordeaux", country: "France", vintage: 2015, type: "Red", grape: "Cabernet Sauvignon", bottles: 6, purchasePrice: 580, currentValue: 820, drinkFrom: 2022, drinkUntil: 2045, location: "Rack A-1", rating: 97, notes: "Exceptional depth and elegance. Dark fruit, cedar, and silky tannins.", color: "#8B1A1A" },
-  { id: 2, name: "Opus One", producer: "Opus One Winery", region: "Napa Valley", country: "USA", vintage: 2018, type: "Red", grape: "Cabernet Sauvignon", bottles: 3, purchasePrice: 350, currentValue: 420, drinkFrom: 2024, drinkUntil: 2040, location: "Rack B-3", rating: 95, notes: "Plush blackcurrant, mocha and violet. Beautiful structure.", color: "#6B0F1A" },
-  { id: 3, name: "Domaine Leflaive Montrachet", producer: "Domaine Leflaive", region: "Burgundy", country: "France", vintage: 2017, type: "White", grape: "Chardonnay", bottles: 2, purchasePrice: 890, currentValue: 1100, drinkFrom: 2021, drinkUntil: 2035, location: "Rack C-1", rating: 98, notes: "Transcendent minerality. Hazelnut, white flowers, and electric acidity.", color: "#C9A84C" },
-  { id: 4, name: "Sassicaia", producer: "Tenuta San Guido", region: "Tuscany", country: "Italy", vintage: 2016, type: "Red", grape: "Cabernet Sauvignon", bottles: 12, purchasePrice: 195, currentValue: 280, drinkFrom: 2023, drinkUntil: 2038, location: "Rack A-4", rating: 96, notes: "The original Super Tuscan. Graphite, tobacco and dark cherry.", color: "#722F37" },
-  { id: 5, name: "Dom Pérignon", producer: "Moët & Chandon", region: "Champagne", country: "France", vintage: 2012, type: "Sparkling", grape: "Chardonnay / Pinot Noir", bottles: 4, purchasePrice: 200, currentValue: 280, drinkFrom: 2020, drinkUntil: 2035, location: "Rack E-1", rating: 96, notes: "Crystalline purity. Toast, almond, white peach and extraordinary fine mousse.", color: "#D4AF37" },
+  { id:1, name:"Château Margaux", producer:"Château Margaux", region:"Bordeaux", country:"France", vintage:2015, type:"Red", grape:"Cabernet Sauvignon", bottles:6, purchasePrice:580, currentValue:820, drinkFrom:2022, drinkUntil:2045, location:"Rack A-1", rating:97, notes:"Exceptional depth and elegance. Dark fruit, cedar, and silky tannins." },
+  { id:2, name:"Opus One", producer:"Opus One Winery", region:"Napa Valley", country:"USA", vintage:2018, type:"Red", grape:"Cabernet Sauvignon", bottles:3, purchasePrice:350, currentValue:420, drinkFrom:2024, drinkUntil:2040, location:"Rack B-3", rating:95, notes:"Plush blackcurrant, mocha and violet. Beautiful structure." },
+  { id:3, name:"Domaine Leflaive Montrachet", producer:"Domaine Leflaive", region:"Burgundy", country:"France", vintage:2017, type:"White", grape:"Chardonnay", bottles:2, purchasePrice:890, currentValue:1100, drinkFrom:2021, drinkUntil:2035, location:"Rack C-1", rating:98, notes:"Transcendent minerality. Hazelnut, white flowers, electric acidity." },
+  { id:4, name:"Sassicaia", producer:"Tenuta San Guido", region:"Tuscany", country:"Italy", vintage:2016, type:"Red", grape:"Cabernet Sauvignon", bottles:12, purchasePrice:195, currentValue:280, drinkFrom:2023, drinkUntil:2038, location:"Rack A-4", rating:96, notes:"The original Super Tuscan. Graphite, tobacco and dark cherry." },
+  { id:5, name:"Dom Pérignon", producer:"Moët & Chandon", region:"Champagne", country:"France", vintage:2012, type:"Sparkling", grape:"Chardonnay / Pinot Noir", bottles:4, purchasePrice:200, currentValue:280, drinkFrom:2020, drinkUntil:2035, location:"Rack E-1", rating:96, notes:"Crystalline purity. Toast, almond, white peach and extraordinary fine mousse." },
 ];
 
-const TYPE_COLORS = { Red:"#8B1A1A", White:"#C9A84C", Sparkling:"#D4AF37", Rosé:"#C97A7A", Dessert:"#A07830" };
 const TYPES = ["All","Red","White","Sparkling","Rosé","Dessert"];
 
 const drinkingStatus = (wine) => {
   const year = new Date().getFullYear();
-  if (year < wine.drinkFrom) return { label:"Too Young", color:"#4FC3F7", bg:"rgba(79,195,247,0.1)" };
-  if (year > wine.drinkUntil) return { label:"Past Peak", color:"#EF5350", bg:"rgba(239,83,80,0.1)" };
+  if (year < wine.drinkFrom) return { label:"Too Young", color:"#3498db" };
+  if (year > wine.drinkUntil) return { label:"Past Peak", color:"#e74c3c" };
   const pct = (year - wine.drinkFrom) / (wine.drinkUntil - wine.drinkFrom);
-  if (pct < 0.4) return { label:"Drinking Window", color:"#66BB6A", bg:"rgba(102,187,106,0.1)" };
-  if (pct < 0.75) return { label:"Peak Now", color:"#FFA726", bg:"rgba(255,167,38,0.15)" };
-  return { label:"Drink Soon", color:"#FF7043", bg:"rgba(255,112,67,0.12)" };
+  if (pct < 0.4) return { label:"Ready to Drink", color:"#27ae60" };
+  if (pct < 0.75) return { label:"Peak Now", color:"#f39c12" };
+  return { label:"Drink Soon", color:"#e67e22" };
 };
 
-const StarRating = ({ rating }) => {
-  const stars = Math.round((rating / 100) * 5);
+// Wine label art generator
+const WineLabel = ({ wine, size = 80 }) => {
+  const wc = WINE_COLORS[wine.type] || WINE_COLORS.Red;
+  const initials = wine.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
   return (
-    <div style={{ display:"flex", gap:2, alignItems:"center" }}>
-      {[1,2,3,4,5].map(i => (
-        <svg key={i} width="11" height="11" viewBox="0 0 24 24" fill={i <= stars ? "#C9A84C" : "rgba(201,168,76,0.2)"}>
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-        </svg>
-      ))}
-      <span style={{ color:"#C9A84C", fontSize:11, marginLeft:3 }}>{rating}</span>
-    </div>
-  );
-};
-
-const DrinkingBar = ({ wine }) => {
-  const year = new Date().getFullYear();
-  const start = wine.vintage, end = wine.drinkUntil + 2, total = end - start;
-  const fromPct = ((wine.drinkFrom - start) / total) * 100;
-  const windowPct = ((wine.drinkUntil - wine.drinkFrom) / total) * 100;
-  const nowPct = Math.min(((year - start) / total) * 100, 98);
-  return (
-    <div style={{ marginTop:8 }}>
-      <div style={{ fontSize:10, color:"#6a5a40", marginBottom:4, display:"flex", justifyContent:"space-between" }}>
-        <span>{wine.vintage}</span><span>{wine.drinkFrom}–{wine.drinkUntil}</span><span>{wine.drinkUntil}</span>
+    <div style={{ width:size, height:size*1.35, borderRadius:6, overflow:'hidden', flexShrink:0, boxShadow:'0 2px 12px rgba(0,0,0,0.12)', position:'relative', background:'#fff' }}>
+      <div style={{ position:'absolute', inset:0, background:`linear-gradient(160deg, ${wc.bg}22, ${wc.bg}44)` }}/>
+      <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:6 }}>
+        <div style={{ width:size*0.55, height:size*0.55, borderRadius:'50%', background:`linear-gradient(135deg, ${wc.bg}, ${wc.bg}cc)`, display:'flex', alignItems:'center', justifyContent:'center', marginBottom:4 }}>
+          <span style={{ color:'#fff', fontSize:size*0.2, fontWeight:700, fontFamily:"'DM Serif Display',serif" }}>{initials}</span>
+        </div>
+        <div style={{ fontSize:size*0.1, color:wc.bg, fontWeight:600, textAlign:'center', lineHeight:1.2, letterSpacing:'0.03em' }}>{wine.vintage}</div>
       </div>
-      <div style={{ position:"relative", height:5, background:"rgba(255,255,255,0.05)", borderRadius:3 }}>
-        <div style={{ position:"absolute", left:`${fromPct}%`, width:`${windowPct}%`, height:"100%", background:"linear-gradient(90deg,#4FC3F7,#C9A84C,#FF7043)", opacity:0.7, borderRadius:3 }} />
-        <div style={{ position:"absolute", left:`${nowPct}%`, top:-2, width:2, height:9, background:"#fff", borderRadius:1 }} />
+      <div style={{ position:'absolute', bottom:0, left:0, right:0, background:wc.bg, height:size*0.18, display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <span style={{ color:'#fff', fontSize:size*0.085, fontWeight:600, letterSpacing:'0.08em', textTransform:'uppercase' }}>{wine.type}</span>
       </div>
     </div>
   );
@@ -94,167 +78,138 @@ const DrinkingBar = ({ wine }) => {
 
 const AI_PROMPT = `Extract ALL wine entries and return ONLY a valid JSON array, no markdown.
 Each object: { "name":string, "producer":string, "region":string, "country":string, "vintage":number, "type":"Red"|"White"|"Sparkling"|"Rosé"|"Dessert", "grape":string, "bottles":number, "purchasePrice":number, "currentValue":number, "drinkFrom":number, "drinkUntil":number, "location":string, "rating":number, "notes":string }
-Map flexibly: appellation→region, qty→bottles, price/cost→purchasePrice, varietal→grape, bin/rack→location, score/pts→rating.
-Estimate drinkFrom/drinkUntil from vintage if missing: Red +5–20yr, White +2–8yr, Sparkling +3–10yr.
+Map flexibly: appellation→region, qty→bottles, price→purchasePrice, varietal→grape, bin→location, score→rating.
+Estimate drinkFrom/drinkUntil from vintage if missing: Red +5-20yr, White +2-8yr, Sparkling +3-10yr.
 Return ONLY the JSON array.`;
 
 const ApiKeyPrompt = ({ onSaved }) => {
   const [key, setKey] = React.useState(localStorage.getItem("cav_api_key")||"");
-  const save = () => { localStorage.setItem("cav_api_key", key.trim()); onSaved(); };
+  const save = () => { if(key.trim()){localStorage.setItem("cav_api_key", key.trim()); onSaved();} };
   return (
-    <div style={{ marginTop:14, background:"rgba(201,168,76,0.06)", border:"1px solid rgba(201,168,76,0.25)", borderRadius:10, padding:16 }}>
-      <div style={{ fontSize:12, color:"#C9A84C", fontWeight:600, marginBottom:6 }}>🔑 API Key Required</div>
-      <div style={{ fontSize:11, color:"#6a5a40", marginBottom:10, lineHeight:1.6 }}>Enter your Anthropic API key to enable AI import. It's saved on your device only.</div>
-      <input value={key} onChange={e=>setKey(e.target.value)} placeholder="sk-ant-api03-..." style={{ background:"rgba(255,255,255,0.05)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:6, color:"#e8dcc8", padding:"8px 10px", fontSize:11, width:"100%", outline:"none", fontFamily:"inherit", marginBottom:10 }}/>
-      <button onClick={save} disabled={!key.trim()} style={{ background:key.trim()?"linear-gradient(135deg,#C9A84C,#a07830)":"rgba(255,255,255,0.04)", border:"none", color:key.trim()?"#1a1209":"#3a2a15", borderRadius:7, padding:"8px 18px", cursor:key.trim()?"pointer":"not-allowed", fontSize:12, fontWeight:700, fontFamily:"inherit", width:"100%" }}>Save API Key</button>
+    <div style={{ background:'#fff8f0', border:'1px solid #ffe0b2', borderRadius:12, padding:20, marginTop:16 }}>
+      <div style={{ fontSize:13, fontWeight:600, color:'#e65100', marginBottom:6 }}>🔑 API Key Required</div>
+      <div style={{ fontSize:12, color:'#888', marginBottom:12, lineHeight:1.6 }}>Enter your Anthropic API key to enable AI import. Saved on your device only.</div>
+      <input value={key} onChange={e=>setKey(e.target.value)} placeholder="sk-ant-api03-..." style={{ border:'1px solid #ddd', borderRadius:8, color:'#1a1a1a', padding:'10px 12px', fontSize:12, width:'100%', outline:'none', marginBottom:10, background:'#fff' }}/>
+      <button onClick={save} disabled={!key.trim()} style={{ background:key.trim()?'#1a1a1a':'#eee', border:'none', color:key.trim()?'#fff':'#aaa', borderRadius:8, padding:'10px 0', fontSize:13, fontWeight:600, width:'100%' }}>Save API Key</button>
     </div>
   );
 };
 
 const ImportModal = ({ onClose, onImport }) => {
   const [stage, setStage] = useState("upload");
-  const [dragOver, setDragOver] = useState(false);
   const [parsedWines, setParsedWines] = useState([]);
   const [checkedIds, setCheckedIds] = useState(new Set());
   const [error, setError] = useState("");
-  const [fileName, setFileName] = useState("");
   const fileRef = useRef();
 
-  const toBase64 = (file) => new Promise((res, rej) => {
-    const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = rej; r.readAsDataURL(file);
-  });
-
-  const xlsxToText = async (file) => {
-    const ab = await file.arrayBuffer();
-    const wb = XLSX.read(ab, { type:"array" });
-    return wb.SheetNames.map(n => `Sheet: ${n}\n${XLSX.utils.sheet_to_csv(wb.Sheets[n])}`).join("\n\n");
-  };
+  const toBase64 = (file) => new Promise((res,rej) => { const r=new FileReader(); r.onload=()=>res(r.result.split(",")[1]); r.onerror=rej; r.readAsDataURL(file); });
+  const xlsxToText = async (file) => { const ab=await file.arrayBuffer(); const wb=XLSX.read(ab,{type:"array"}); return wb.SheetNames.map(n=>`Sheet: ${n}\n${XLSX.utils.sheet_to_csv(wb.Sheets[n])}`).join("\n\n"); };
 
   const parseFile = useCallback(async (file) => {
-    setFileName(file.name); setError(""); setStage("parsing");
+    setError(""); setStage("parsing");
     try {
-      const isPdf = file.type === "application/pdf";
-      const isText = file.type === "text/plain" || file.type === "text/csv" || /\.(txt|csv)$/i.test(file.name);
+      const isPdf = file.type==="application/pdf";
+      const isText = file.type==="text/plain"||file.type==="text/csv"||/\.(txt|csv)$/i.test(file.name);
       const isSheet = /\.(xlsx|xls)$/i.test(file.name);
-      if (!isPdf && !isText && !isSheet) throw new Error("Please upload a PDF, Excel, CSV or text file.");
+      if(!isPdf&&!isText&&!isSheet) throw new Error("Please upload a PDF, Excel, CSV or text file.");
       let userContent;
-      if (isPdf) {
-        const b64 = await toBase64(file);
-        userContent = [{ type:"document", source:{ type:"base64", media_type:"application/pdf", data:b64 } }, { type:"text", text:AI_PROMPT }];
-      } else if (isText) {
-        const text = await file.text();
-        userContent = [{ type:"text", text:`File contents:\n\n${text}\n\n${AI_PROMPT}` }];
-      } else {
-        const text = await xlsxToText(file);
-        userContent = [{ type:"text", text:`File contents:\n\n${text}\n\n${AI_PROMPT}` }];
+      if(isPdf){ const b64=await toBase64(file); userContent=[{type:"document",source:{type:"base64",media_type:"application/pdf",data:b64}},{type:"text",text:AI_PROMPT}]; }
+      else if(isText){ const text=await file.text(); userContent=[{type:"text",text:`File contents:\n\n${text}\n\n${AI_PROMPT}`}]; }
+      else { const text=await xlsxToText(file); userContent=[{type:"text",text:`File contents:\n\n${text}\n\n${AI_PROMPT}`}]; }
+      const apiKey=localStorage.getItem("cav_api_key");
+      if(!apiKey) throw new Error("NO_API_KEY");
+      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:8000,messages:[{role:"user",content:userContent}]})});
+      if(!res.ok){const e=await res.json();throw new Error(`API ${res.status}: ${e.error?.message||JSON.stringify(e)}`);}
+      const data=await res.json();
+      const raw=data.content?.map(b=>b.text||"").join("")||"";
+      let parsed;
+      try{
+        const clean=raw.replace(/```json|```/g,"").trim();
+        const start=clean.indexOf("[");
+        const end=clean.lastIndexOf("]");
+        if(start===-1||end===-1) throw new Error("no array");
+        parsed=JSON.parse(clean.slice(start,end+1));
+      } catch(e1){
+        // Try to extract individual objects even if array is truncated
+        const matches=[...raw.matchAll(/\{[^{}]*"name"[^{}]*\}/g)];
+        if(matches.length===0) throw new Error("Could not read file. Please try CSV format instead.");
+        try{ parsed=matches.map(m=>JSON.parse(m[0])); }
+        catch(e2){ throw new Error("Could not read file. Please try CSV format instead."); }
       }
-      const apiKey = localStorage.getItem("cav_api_key");
-      if (!apiKey) throw new Error("NO_API_KEY");
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method:"POST", headers:{ "Content-Type":"application/json", "x-api-key":apiKey, "anthropic-version":"2023-06-01", "anthropic-dangerous-direct-browser-access":"true" },
-        body: JSON.stringify({ model:"claude-sonnet-4-5", max_tokens:4000, messages:[{ role:"user", content:userContent }] })
-      });
-      if (!res.ok) { const errData = await res.json(); throw new Error(`API ${res.status}: ${JSON.stringify(errData)}`); }
-      const data = await res.json();
-      const raw = data.content?.map(b => b.text || "").join("") || "";
-      const parsed = JSON.parse(raw.replace(/```json|```/g,"").trim());
-      const wines = parsed.map((w,i) => ({ ...w, id:Date.now()+i, color:TYPE_COLORS[w.type]||"#722F37", rating:w.rating||88, bottles:w.bottles||1, drinkFrom:w.drinkFrom||(w.vintage+4), drinkUntil:w.drinkUntil||(w.vintage+15) }));
+      const wines=parsed.map((w,i)=>({...w,id:Date.now()+i,rating:w.rating||null,purchasePrice:w.purchasePrice||null,currentValue:w.currentValue||null,bottles:w.bottles||1,drinkFrom:w.drinkFrom||(w.vintage+4),drinkUntil:w.drinkUntil||(w.vintage+15)}));
       setParsedWines(wines); setCheckedIds(new Set(wines.map(w=>w.id))); setStage("preview");
     } catch(e) {
-      if (e.message === "NO_API_KEY") { setError("API_KEY_NEEDED"); }
-      else { setError(e.message||"Failed to parse. Try again."); }
+      if(e.message==="NO_API_KEY") setError("API_KEY_NEEDED");
+      else setError(e.message||"Failed to parse.");
       setStage("upload");
     }
-  }, []);
+  },[]);
 
-  const onDrop = (e) => { e.preventDefault(); setDragOver(false); if(e.dataTransfer.files[0]) parseFile(e.dataTransfer.files[0]); };
-  const toggle = (id) => setCheckedIds(s => { const n = new Set(s); n.has(id)?n.delete(id):n.add(id); return n; });
+  const toggle=(id)=>setCheckedIds(s=>{const n=new Set(s);n.has(id)?n.delete(id):n.add(id);return n;});
 
   return (
-    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.9)", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }} onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{ background:"#120e07", border:"1px solid rgba(201,168,76,0.18)", borderRadius:18, width:"100%", maxWidth:640, maxHeight:"88vh", overflow:"auto", padding:28, position:"relative" }}>
-        <button onClick={onClose} style={{ position:"absolute", top:14, right:18, background:"none", border:"none", color:"#4a3a22", fontSize:24, cursor:"pointer" }}>×</button>
-        <h2 style={{ fontFamily:"Playfair Display,serif", fontSize:20, color:"#e8dcc8", marginBottom:6 }}>AI-Powered Import</h2>
-        <p style={{ color:"#6a5a40", fontSize:12, marginBottom:22, lineHeight:1.6 }}>Upload any Excel, CSV or PDF — Claude maps columns automatically.</p>
-
-        <div style={{ display:"flex", alignItems:"center", gap:7, marginBottom:24 }}>
-          {[["1","Upload"],["2","AI Analysis"],["3","Review"]].map(([n,lbl],i) => {
-            const done=(stage==="parsing"&&i===0)||(stage==="preview"&&i<=1);
-            const active=(stage==="upload"&&i===0)||(stage==="parsing"&&i===1)||(stage==="preview"&&i===2);
-            return (
-              <div key={n} style={{ display:"flex", alignItems:"center", gap:6 }}>
-                <div style={{ width:22, height:22, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:700, background:done?"#C9A84C":active?"rgba(201,168,76,0.15)":"rgba(255,255,255,0.03)", color:done?"#1a1209":active?"#C9A84C":"#3a2a15", border:active&&!done?"1px solid rgba(201,168,76,0.35)":"none" }}>
-                  {done?"✓":n}
-                </div>
-                <span style={{ fontSize:10, color:active?"#C9A84C":"#3a2a15" }}>{lbl}</span>
-                {i<2&&<div style={{ width:16, height:1, background:"rgba(255,255,255,0.06)" }}/>}
-              </div>
-            );
-          })}
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:640,maxHeight:"90vh",overflow:"auto",padding:"24px 20px 40px",position:"relative"}}>
+        <div style={{width:36,height:4,background:"#e0e0e0",borderRadius:2,margin:"0 auto 20px"}}/>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+          <h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:22,color:"#1a1a1a"}}>AI Import</h2>
+          <button onClick={onClose} style={{background:"#f5f5f5",border:"none",borderRadius:"50%",width:32,height:32,fontSize:18,color:"#888",display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
         </div>
 
         {stage==="upload" && (
           <>
-            <div onDragOver={e=>{e.preventDefault();setDragOver(true)}} onDragLeave={()=>setDragOver(false)} onDrop={onDrop} onClick={()=>fileRef.current?.click()}
-              style={{ border:`2px dashed ${dragOver?"#C9A84C":"rgba(201,168,76,0.18)"}`, borderRadius:12, padding:"40px 24px", textAlign:"center", cursor:"pointer", background:dragOver?"rgba(201,168,76,0.03)":"transparent", transition:"all 0.2s" }}>
-              <div style={{ fontSize:34, marginBottom:12 }}>📂</div>
-              <div style={{ fontFamily:"Playfair Display,serif", fontSize:16, color:"#e8dcc8", marginBottom:5 }}>Tap to choose your file</div>
-              <div style={{ color:"#4a3a22", fontSize:11, marginBottom:16 }}>Excel, CSV or PDF supported</div>
-              <span style={{ background:"rgba(201,168,76,0.08)", border:"1px solid rgba(201,168,76,0.22)", color:"#C9A84C", borderRadius:7, padding:"7px 18px", fontSize:12 }}>Browse</span>
+            <div onClick={()=>fileRef.current?.click()} style={{border:"2px dashed #e0e0e0",borderRadius:16,padding:"40px 20px",textAlign:"center",cursor:"pointer",background:"#fafafa"}}>
+              <div style={{fontSize:40,marginBottom:12}}>📂</div>
+              <div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:"#1a1a1a",marginBottom:6}}>Choose your file</div>
+              <div style={{color:"#aaa",fontSize:13,marginBottom:20}}>Excel, CSV or PDF supported</div>
+              <span style={{background:"#1a1a1a",color:"#fff",borderRadius:10,padding:"10px 28px",fontSize:13,fontWeight:600}}>Browse Files</span>
             </div>
-            <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.pdf,.txt,text/csv,text/plain,application/pdf" style={{ display:"none" }} onChange={e=>e.target.files[0]&&parseFile(e.target.files[0])}/>
-            {error && error !== "API_KEY_NEEDED" && <div style={{ marginTop:12, background:"rgba(239,83,80,0.08)", border:"1px solid rgba(239,83,80,0.25)", borderRadius:8, padding:"9px 12px", color:"#EF5350", fontSize:12 }}>{error}</div>}
-            {error === "API_KEY_NEEDED" && <ApiKeyPrompt onSaved={()=>setError("")}/>}
+            <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.pdf,.txt,text/csv,text/plain,application/pdf" style={{display:"none"}} onChange={e=>e.target.files[0]&&parseFile(e.target.files[0])}/>
+            {error&&error!=="API_KEY_NEEDED"&&<div style={{marginTop:12,background:"#fef0f0",border:"1px solid #fcc",borderRadius:10,padding:"10px 14px",color:"#c0392b",fontSize:12}}>{error}</div>}
+            {error==="API_KEY_NEEDED"&&<ApiKeyPrompt onSaved={()=>setError("")}/>}
           </>
         )}
 
         {stage==="parsing" && (
-          <div style={{ textAlign:"center", padding:"50px 0" }}>
-            <div style={{ position:"relative", width:70, height:70, margin:"0 auto 20px" }}>
-              <svg width="70" height="70" viewBox="0 0 70 70" style={{ animation:"spin 1.4s linear infinite" }}>
-                <style>{`@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}`}</style>
-                <circle cx="35" cy="35" r="30" fill="none" stroke="rgba(201,168,76,0.12)" strokeWidth="3"/>
-                <path d="M35 5 A30 30 0 0 1 65 35" fill="none" stroke="#C9A84C" strokeWidth="3" strokeLinecap="round"/>
-              </svg>
-              <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22 }}>🍷</div>
-            </div>
-            <div style={{ fontFamily:"Playfair Display,serif", fontSize:17, color:"#e8dcc8", marginBottom:7 }}>Claude is reading your file…</div>
-            <div style={{ color:"#4a3a22", fontSize:12 }}>Mapping columns · Inferring drinking windows</div>
+          <div style={{textAlign:"center",padding:"50px 0"}}>
+            <div style={{fontSize:48,marginBottom:16,animation:"pulse 1.5s ease-in-out infinite"}}>🍷</div>
+            <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}`}</style>
+            <div style={{fontFamily:"'DM Serif Display',serif",fontSize:20,color:"#1a1a1a",marginBottom:8}}>Analysing your wines…</div>
+            <div style={{color:"#aaa",fontSize:13}}>Claude is mapping your collection</div>
           </div>
         )}
 
         {stage==="preview" && (
           <>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-              <span style={{ color:"#6a5a40", fontSize:12 }}>Found <strong style={{ color:"#C9A84C" }}>{parsedWines.length}</strong> wines · <strong style={{ color:"#C9A84C" }}>{checkedIds.size}</strong> selected</span>
-              <div style={{ display:"flex", gap:10 }}>
-                <button onClick={()=>setCheckedIds(new Set(parsedWines.map(w=>w.id)))} style={{ background:"none", border:"none", color:"#C9A84C", fontSize:11, cursor:"pointer" }}>All</button>
-                <button onClick={()=>setCheckedIds(new Set())} style={{ background:"none", border:"none", color:"#4a3a22", fontSize:11, cursor:"pointer" }}>None</button>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+              <span style={{fontSize:13,color:"#888"}}>Found <strong style={{color:"#1a1a1a"}}>{parsedWines.length}</strong> wines</span>
+              <div style={{display:"flex",gap:12}}>
+                <button onClick={()=>setCheckedIds(new Set(parsedWines.map(w=>w.id)))} style={{background:"none",border:"none",color:"#1a1a1a",fontSize:12,fontWeight:600}}>Select All</button>
+                <button onClick={()=>setCheckedIds(new Set())} style={{background:"none",border:"none",color:"#aaa",fontSize:12}}>None</button>
               </div>
             </div>
-            <div style={{ maxHeight:280, overflow:"auto", display:"flex", flexDirection:"column", gap:5, marginBottom:18 }}>
-              {parsedWines.map(w => {
-                const on = checkedIds.has(w.id);
-                return (
-                  <div key={w.id} onClick={()=>toggle(w.id)} style={{ display:"flex", gap:9, alignItems:"center", padding:"9px 11px", borderRadius:8, border:`1px solid ${on?"rgba(201,168,76,0.28)":"rgba(255,255,255,0.05)"}`, background:on?"rgba(201,168,76,0.03)":"transparent", cursor:"pointer" }}>
-                    <div style={{ width:15, height:15, borderRadius:3, border:`1.5px solid ${on?"#C9A84C":"#2a1f0e"}`, background:on?"#C9A84C":"transparent", flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
-                      {on&&<svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="#1a1209" strokeWidth="2.5"><path d="M2 6l3 3 5-5"/></svg>}
+            <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:20,maxHeight:320,overflowY:"auto"}}>
+              {parsedWines.map(w=>{
+                const on=checkedIds.has(w.id);
+                const wc=WINE_COLORS[w.type]||WINE_COLORS.Red;
+                return(
+                  <div key={w.id} onClick={()=>toggle(w.id)} style={{display:"flex",gap:12,alignItems:"center",padding:"12px 14px",borderRadius:12,border:`1.5px solid ${on?"#1a1a1a":"#f0f0f0"}`,background:on?"#fafafa":"#fff",cursor:"pointer"}}>
+                    <div style={{width:18,height:18,borderRadius:5,border:`2px solid ${on?"#1a1a1a":"#ddd"}`,background:on?"#1a1a1a":"transparent",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      {on&&<svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#fff" strokeWidth="2.5"><path d="M2 6l3 3 5-5"/></svg>}
                     </div>
-                    <div style={{ width:7, height:7, borderRadius:"50%", background:w.color||"#722F37", flexShrink:0 }}/>
-                    <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ fontFamily:"Playfair Display,serif", fontSize:13, color:"#e8dcc8", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{w.name||"Unknown Wine"}</div>
-                      <div style={{ fontSize:10, color:"#4a3a22", marginTop:1 }}>{[w.producer,w.region,w.vintage].filter(Boolean).join(" · ")}</div>
+                    <div style={{width:8,height:8,borderRadius:"50%",background:wc.bg,flexShrink:0}}/>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontWeight:600,fontSize:13,color:"#1a1a1a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{w.name}</div>
+                      <div style={{fontSize:11,color:"#aaa",marginTop:1}}>{w.vintage} · {w.region}</div>
                     </div>
-                    <div style={{ fontSize:11, color:"#6a5a40", flexShrink:0 }}>{w.type}</div>
-                    {w.purchasePrice?<div style={{ fontSize:11, color:"#C9A84C", flexShrink:0 }}>${w.purchasePrice}</div>:null}
+                    <div style={{fontSize:11,color:"#888",flexShrink:0}}>{w.bottles}🍾</div>
                   </div>
                 );
               })}
             </div>
-            <div style={{ display:"flex", gap:9, justifyContent:"flex-end" }}>
-              <button onClick={()=>setStage("upload")} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", color:"#6a5a40", borderRadius:7, padding:"8px 16px", cursor:"pointer", fontSize:12, fontFamily:"inherit" }}>Back</button>
-              <button disabled={checkedIds.size===0} onClick={()=>{onImport(parsedWines.filter(w=>checkedIds.has(w.id)));onClose();}}
-                style={{ background:checkedIds.size>0?"linear-gradient(135deg,#C9A84C,#a07830)":"rgba(255,255,255,0.04)", border:"none", color:checkedIds.size>0?"#1a1209":"#3a2a15", borderRadius:7, padding:"8px 20px", cursor:checkedIds.size>0?"pointer":"not-allowed", fontSize:12, fontWeight:700, fontFamily:"inherit" }}>
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={()=>setStage("upload")} style={{flex:1,background:"#f5f5f5",border:"none",color:"#888",borderRadius:12,padding:"13px 0",fontSize:13,fontWeight:600}}>Back</button>
+              <button disabled={checkedIds.size===0} onClick={()=>{onImport(parsedWines.filter(w=>checkedIds.has(w.id)));onClose();}} style={{flex:2,background:checkedIds.size>0?"#1a1a1a":"#eee",border:"none",color:checkedIds.size>0?"#fff":"#aaa",borderRadius:12,padding:"13px 0",fontSize:13,fontWeight:600}}>
                 Add {checkedIds.size} wine{checkedIds.size!==1?"s":""}
               </button>
             </div>
@@ -267,64 +222,84 @@ const ImportModal = ({ onClose, onImport }) => {
 
 const WineModal = ({ wine, onClose, onSave, onDelete }) => {
   const [editing, setEditing] = useState(!wine.id);
-  const [form, setForm] = useState({ ...wine });
+  const [form, setForm] = useState({...wine});
   const set = (k,v) => setForm(f=>({...f,[k]:v}));
-  const inp = { background:"rgba(255,255,255,0.04)", border:"1px solid rgba(201,168,76,0.14)", borderRadius:6, color:"#e8dcc8", padding:"7px 11px", fontSize:12, width:"100%", outline:"none", fontFamily:"inherit" };
-  const lbl = { fontSize:10, color:"#4a3a22", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:3, display:"block" };
+  const wc = WINE_COLORS[wine.type||form.type] || WINE_COLORS.Red;
+  const status = wine.id ? drinkingStatus(wine) : null;
+
   return (
-    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.88)", zIndex:150, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }} onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{ background:"#1a1209", border:"1px solid rgba(201,168,76,0.18)", borderRadius:16, width:"100%", maxWidth:560, maxHeight:"90vh", overflow:"auto", padding:26, position:"relative" }}>
-        <button onClick={onClose} style={{ position:"absolute", top:12, right:14, background:"none", border:"none", color:"#4a3a22", fontSize:22, cursor:"pointer" }}>×</button>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
-          <h2 style={{ fontFamily:"Playfair Display,serif", fontSize:18, color:"#e8dcc8", margin:0 }}>{wine.id?(editing?"Edit Wine":wine.name):"Add Wine"}</h2>
-          {wine.id&&!editing&&(
-            <div style={{ display:"flex", gap:6 }}>
-              <button onClick={()=>setEditing(true)} style={{ background:"rgba(201,168,76,0.08)", border:"1px solid rgba(201,168,76,0.22)", color:"#C9A84C", borderRadius:6, padding:"4px 11px", cursor:"pointer", fontSize:11 }}>Edit</button>
-              <button onClick={()=>onDelete(wine.id)} style={{ background:"rgba(239,83,80,0.07)", border:"1px solid rgba(239,83,80,0.22)", color:"#EF5350", borderRadius:6, padding:"4px 11px", cursor:"pointer", fontSize:11 }}>Delete</button>
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:150,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:640,maxHeight:"92vh",overflow:"auto",position:"relative"}}>
+        <div style={{width:36,height:4,background:"#e0e0e0",borderRadius:2,margin:"14px auto 0"}}/>
+
+        {!editing && wine.id ? (
+          <>
+            <div style={{background:wc.light,padding:"20px 20px 24px",borderRadius:"20px 20px 0 0"}}>
+              <div style={{display:"flex",gap:16,alignItems:"flex-start"}}>
+                <WineLabel wine={wine} size={90}/>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{display:"flex",gap:6,marginBottom:8,flexWrap:"wrap"}}>
+                    <span style={{background:wc.bg,color:"#fff",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:600}}>{wine.type}</span>
+                    {status&&<span style={{background:"#fff",color:status.color,border:`1px solid ${status.color}40`,borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:600}}>{status.label}</span>}
+                  </div>
+                  <h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:20,color:"#1a1a1a",lineHeight:1.2,marginBottom:4}}>{wine.name}</h2>
+                  <div style={{fontSize:13,color:"#666"}}>{wine.producer}</div>
+                  <div style={{fontSize:12,color:"#aaa",marginTop:2}}>{wine.region}, {wine.country} · {wine.vintage}</div>
+                </div>
+              </div>
             </div>
-          )}
-        </div>
-        {!editing&&wine.id ? (
-          <div>
-            <div style={{ display:"flex", gap:6, marginBottom:16, flexWrap:"wrap" }}>
-              {(()=>{const s=drinkingStatus(wine);return <span style={{ background:s.bg, color:s.color, border:`1px solid ${s.color}35`, borderRadius:20, padding:"3px 10px", fontSize:11 }}>{s.label}</span>;})()}
-              <span style={{ background:"rgba(255,255,255,0.03)", color:"#6a5a40", border:"1px solid rgba(255,255,255,0.07)", borderRadius:20, padding:"3px 10px", fontSize:11 }}>{wine.type}</span>
-              <span style={{ background:"rgba(255,255,255,0.03)", color:"#6a5a40", border:"1px solid rgba(255,255,255,0.07)", borderRadius:20, padding:"3px 10px", fontSize:11 }}>{wine.vintage}</span>
+
+            <div style={{padding:"20px 20px 40px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:20}}>
+                {[["Bottles",wine.bottles||0],["Rating",wine.rating?`${wine.rating}/100`:"—"],["Value",wine.currentValue?`$${wine.currentValue.toLocaleString()}`:"—"]].map(([l,v])=>(
+                  <div key={l} style={{background:"#fafafa",borderRadius:12,padding:"12px 10px",textAlign:"center"}}>
+                    <div style={{fontSize:11,color:"#aaa",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.05em"}}>{l}</div>
+                    <div style={{fontSize:16,fontWeight:700,color:"#1a1a1a"}}>{v}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
+                {[["Grape",wine.grape],["Location",wine.location],["Purchase",wine.purchasePrice?`$${wine.purchasePrice}`:"—"],["Drink Window",`${wine.drinkFrom}–${wine.drinkUntil}`]].map(([l,v])=>(
+                  <div key={l}><div style={{fontSize:10,color:"#bbb",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>{l}</div><div style={{fontSize:13,color:"#1a1a1a",fontWeight:500}}>{v||"—"}</div></div>
+                ))}
+              </div>
+
+              {wine.notes&&<div style={{background:"#fafafa",borderRadius:12,padding:16,marginBottom:20}}><div style={{fontSize:10,color:"#bbb",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>Tasting Notes</div><p style={{fontSize:13,color:"#444",lineHeight:1.7,fontStyle:"italic"}}>"{wine.notes}"</p></div>}
+
+              <div style={{display:"flex",gap:10}}>
+                <button onClick={()=>setEditing(true)} style={{flex:1,background:"#f5f5f5",border:"none",color:"#1a1a1a",borderRadius:12,padding:"13px 0",fontSize:13,fontWeight:600}}>Edit</button>
+                <button onClick={()=>onDelete(wine.id)} style={{flex:1,background:"#fef0f0",border:"none",color:"#e74c3c",borderRadius:12,padding:"13px 0",fontSize:13,fontWeight:600}}>Delete</button>
+              </div>
             </div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
-              {[["Producer",wine.producer],["Region",wine.region],["Country",wine.country],["Grape",wine.grape],["Bottles",wine.bottles],["Location",wine.location],["Purchase",wine.purchasePrice?`$${wine.purchasePrice}`:"—"],["Value",wine.currentValue?`$${wine.currentValue}`:"—"]].map(([k,v])=>(
-                <div key={k}><div style={lbl}>{k}</div><div style={{ color:"#e8dcc8", fontSize:13 }}>{v||"—"}</div></div>
-              ))}
-            </div>
-            <div style={{ marginBottom:12 }}><div style={lbl}>Rating</div><StarRating rating={wine.rating||88}/></div>
-            <div style={{ marginBottom:12 }}><div style={lbl}>Drinking Window</div><DrinkingBar wine={wine}/></div>
-            {wine.notes&&<div><div style={lbl}>Tasting Notes</div><p style={{ color:"#b8a890", fontSize:12, lineHeight:1.7, fontStyle:"italic" }}>{wine.notes}</p></div>}
-          </div>
+          </>
         ) : (
-          <div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 12px" }}>
-              {[["name","Wine Name","text"],["producer","Producer","text"],["region","Region","text"],["country","Country","text"],["vintage","Vintage","number"],["grape","Grape Variety","text"],["bottles","Bottles","number"],["location","Cellar Location","text"],["purchasePrice","Purchase Price ($)","number"],["currentValue","Current Value ($)","number"],["drinkFrom","Drink From","number"],["drinkUntil","Drink Until","number"],["rating","Rating (0–100)","number"]].map(([k,l,t])=>(
-                <div key={k} style={{ marginBottom:10 }}>
-                  <label style={lbl}>{l}</label>
-                  <input type={t} value={form[k]||""} onChange={e=>set(k,t==="number"?+e.target.value:e.target.value)} style={inp}/>
+          <div style={{padding:"20px 20px 40px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
+              <h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:22,color:"#1a1a1a"}}>{wine.id?"Edit Wine":"Add Wine"}</h2>
+              <button onClick={onClose} style={{background:"#f5f5f5",border:"none",borderRadius:"50%",width:32,height:32,fontSize:18,color:"#888"}}>×</button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+              {[["name","Wine Name","text"],["producer","Producer","text"],["region","Region","text"],["country","Country","text"],["vintage","Vintage","number"],["grape","Grape","text"],["bottles","Bottles","number"],["location","Location","text"],["purchasePrice","Buy Price ($)","number"],["currentValue","Value ($)","number"],["drinkFrom","Drink From","number"],["drinkUntil","Drink Until","number"],["rating","Rating (0–100)","number"]].map(([k,l,t])=>(
+                <div key={k} style={{marginBottom:4}}>
+                  <label style={{fontSize:10,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4,display:"block"}}>{l}</label>
+                  <input type={t} value={form[k]||""} onChange={e=>set(k,t==="number"?+e.target.value:e.target.value)} style={{border:"1px solid #eee",borderRadius:8,color:"#1a1a1a",padding:"9px 11px",fontSize:13,width:"100%",outline:"none",background:"#fafafa"}}/>
                 </div>
               ))}
-              <div style={{ marginBottom:10 }}>
-                <label style={lbl}>Type</label>
-                <select value={form.type||"Red"} onChange={e=>set("type",e.target.value)} style={inp}>
+              <div style={{marginBottom:4}}>
+                <label style={{fontSize:10,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4,display:"block"}}>Type</label>
+                <select value={form.type||"Red"} onChange={e=>set("type",e.target.value)} style={{border:"1px solid #eee",borderRadius:8,color:"#1a1a1a",padding:"9px 11px",fontSize:13,width:"100%",outline:"none",background:"#fafafa"}}>
                   {["Red","White","Sparkling","Rosé","Dessert"].map(t=><option key={t}>{t}</option>)}
                 </select>
               </div>
             </div>
-            <div style={{ marginBottom:12 }}>
-              <label style={lbl}>Tasting Notes</label>
-              <textarea value={form.notes||""} onChange={e=>set("notes",e.target.value)} rows={3} style={{ ...inp, resize:"vertical" }}/>
+            <div style={{marginBottom:16,marginTop:4}}>
+              <label style={{fontSize:10,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4,display:"block"}}>Tasting Notes</label>
+              <textarea value={form.notes||""} onChange={e=>set("notes",e.target.value)} rows={3} style={{border:"1px solid #eee",borderRadius:8,color:"#1a1a1a",padding:"9px 11px",fontSize:13,width:"100%",outline:"none",background:"#fafafa",resize:"vertical"}}/>
             </div>
-            <div style={{ display:"flex", gap:7, justifyContent:"flex-end" }}>
-              {wine.id&&<button onClick={()=>setEditing(false)} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", color:"#4a3a22", borderRadius:7, padding:"7px 14px", cursor:"pointer", fontSize:12, fontFamily:"inherit" }}>Cancel</button>}
-              <button onClick={()=>onSave({...form, color:TYPE_COLORS[form.type]||"#722F37"})} style={{ background:"linear-gradient(135deg,#C9A84C,#a07830)", border:"none", color:"#1a1209", borderRadius:7, padding:"7px 18px", cursor:"pointer", fontSize:12, fontWeight:700, fontFamily:"inherit" }}>
-                {wine.id?"Save":"Add to Collection"}
-              </button>
+            <div style={{display:"flex",gap:10}}>
+              {wine.id&&<button onClick={()=>setEditing(false)} style={{flex:1,background:"#f5f5f5",border:"none",color:"#888",borderRadius:12,padding:"13px 0",fontSize:13,fontWeight:600}}>Cancel</button>}
+              <button onClick={()=>onSave({...form,id:wine.id||Date.now()})} style={{flex:2,background:"#1a1a1a",border:"none",color:"#fff",borderRadius:12,padding:"13px 0",fontSize:13,fontWeight:600}}>{wine.id?"Save Changes":"Add to Collection"}</button>
             </div>
           </div>
         )}
@@ -337,154 +312,172 @@ function App() {
   const [wines, setWines] = useState(SAMPLE_WINES);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("All");
-  const [filterRegion, setFilterRegion] = useState("All");
-  const [filterVintage, setFilterVintage] = useState("");
   const [sortBy, setSortBy] = useState("name");
   const [selected, setSelected] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const [toast, setToast] = useState(null);
   const [showApiKey, setShowApiKey] = useState(false);
-
-  const regions = useMemo(()=>["All",...[...new Set(wines.map(w=>w.region))].sort()],[wines]);
-  const vintages = useMemo(()=>[...new Set(wines.map(w=>w.vintage))].sort((a,b)=>b-a),[wines]);
+  const [toast, setToast] = useState(null);
+  const [drinkConfirm, setDrinkConfirm] = useState(null);
 
   const filtered = useMemo(()=>wines.filter(w=>{
     const q=search.toLowerCase();
-    return(!q||[w.name,w.producer,w.region,w.grape].some(s=>s?.toLowerCase().includes(q)))
-      &&(filterType==="All"||w.type===filterType)
-      &&(filterRegion==="All"||w.region===filterRegion)
-      &&(!filterVintage||w.vintage===+filterVintage);
+    return(!q||[w.name,w.producer,w.region,w.grape].some(s=>s?.toLowerCase().includes(q)))&&(filterType==="All"||w.type===filterType);
   }).sort((a,b)=>{
     if(sortBy==="name") return (a.name||"").localeCompare(b.name||"");
     if(sortBy==="vintage") return b.vintage-a.vintage;
     if(sortBy==="rating") return (b.rating||0)-(a.rating||0);
     if(sortBy==="value") return (b.currentValue||0)-(a.currentValue||0);
     return 0;
-  }),[wines,search,filterType,filterRegion,filterVintage,sortBy]);
+  }),[wines,search,filterType,sortBy]);
 
   const stats = useMemo(()=>({
-    total:wines.reduce((s,w)=>s+(w.bottles||0),0),
-    value:wines.reduce((s,w)=>s+(w.currentValue||0)*(w.bottles||1),0),
-    avg:wines.length?Math.round(wines.reduce((s,w)=>s+(w.rating||0),0)/wines.length):0,
-    peak:wines.filter(w=>drinkingStatus(w).label==="Peak Now").length,
+    bottles: wines.reduce((s,w)=>s+(w.bottles||0),0),
+    value: wines.reduce((s,w)=>s+((w.currentValue||0)*(w.bottles||1)),0),
+    wines: wines.length,
   }),[wines]);
 
-  const handleSave=(form)=>{if(form.id)setWines(ws=>ws.map(w=>w.id===form.id?form:w));else setWines(ws=>[...ws,{...form,id:Date.now()}]);setSelected(null);setShowAdd(false);};
+  const handleSave=(form)=>{
+    if(form.id&&wines.find(w=>w.id===form.id)) setWines(ws=>ws.map(w=>w.id===form.id?form:w));
+    else setWines(ws=>[...ws,{...form,id:Date.now()}]);
+    setSelected(null); setShowAdd(false);
+  };
   const handleDelete=(id)=>{setWines(ws=>ws.filter(w=>w.id!==id));setSelected(null);};
-  const handleImport=(newWines)=>{setWines(ws=>[...ws,...newWines]);setToast(`✓ ${newWines.length} wine${newWines.length!==1?"s":""} added`);setTimeout(()=>setToast(null),4000);};
+  const handleImport=(newWines)=>{setWines(ws=>[...ws,...newWines]);showToast(`✓ ${newWines.length} wines added`);};
+  const showToast=(msg)=>{setToast(msg);setTimeout(()=>setToast(null),3000);};
 
-  const pill=(active,onClick,label)=>(
-    <button onClick={onClick} style={{ background:active?"linear-gradient(135deg,#C9A84C,#a07830)":"rgba(255,255,255,0.03)", color:active?"#1a1209":"#5a4a35", border:active?"none":"1px solid rgba(255,255,255,0.07)", borderRadius:20, padding:"5px 12px", cursor:"pointer", fontSize:11, fontWeight:active?700:400, whiteSpace:"nowrap" }}>{label}</button>
-  );
-  const selStyle={ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:7, color:"#5a4a35", padding:"6px 10px", fontSize:11, outline:"none", fontFamily:"inherit", cursor:"pointer" };
+  const drinkBottle = (wine, e) => {
+    e.stopPropagation();
+    if(wine.bottles<=0){ showToast("No bottles left"); return; }
+    setDrinkConfirm(wine);
+  };
+  const confirmDrink = () => {
+    setWines(ws=>ws.map(w=>w.id===drinkConfirm.id?{...w,bottles:Math.max(0,w.bottles-1)}:w));
+    showToast(`🍷 Enjoyed a bottle of ${drinkConfirm.name}`);
+    setDrinkConfirm(null);
+  };
 
   return (
-    <div style={{ minHeight:"100vh", background:"#0e0a05" }}>
-      {toast&&<div style={{ position:"fixed", bottom:26, left:"50%", transform:"translateX(-50%)", background:"linear-gradient(135deg,#1e1608,#2a1f0e)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:9, padding:"11px 22px", color:"#C9A84C", fontSize:13, zIndex:400, boxShadow:"0 8px 30px rgba(0,0,0,0.7)", whiteSpace:"nowrap" }}>{toast}</div>}
+    <div style={{minHeight:"100vh",background:"#f7f5f2"}}>
+
+      {/* Toast */}
+      {toast&&<div style={{position:"fixed",bottom:30,left:"50%",transform:"translateX(-50%)",background:"#1a1a1a",color:"#fff",borderRadius:30,padding:"12px 24px",fontSize:13,fontWeight:500,zIndex:500,whiteSpace:"nowrap",boxShadow:"0 4px 20px rgba(0,0,0,0.2)"}}>{toast}</div>}
+
+      {/* Drink Confirm Sheet */}
+      {drinkConfirm&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:300,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setDrinkConfirm(null)}>
+          <div style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:480,padding:"24px 24px 48px"}} onClick={e=>e.stopPropagation()}>
+            <div style={{width:36,height:4,background:"#e0e0e0",borderRadius:2,margin:"0 auto 20px"}}/>
+            <div style={{textAlign:"center",marginBottom:24}}>
+              <div style={{fontSize:48,marginBottom:12}}>🍷</div>
+              <h3 style={{fontFamily:"'DM Serif Display',serif",fontSize:20,color:"#1a1a1a",marginBottom:6}}>Drinking a bottle?</h3>
+              <p style={{fontSize:13,color:"#888"}}>{drinkConfirm.name} · {drinkConfirm.vintage}</p>
+              <p style={{fontSize:12,color:"#bbb",marginTop:4}}>{drinkConfirm.bottles} bottle{drinkConfirm.bottles!==1?"s":""} remaining → {drinkConfirm.bottles-1}</p>
+            </div>
+            <div style={{display:"flex",gap:12}}>
+              <button onClick={()=>setDrinkConfirm(null)} style={{flex:1,background:"#f5f5f5",border:"none",color:"#888",borderRadius:12,padding:"14px 0",fontSize:14,fontWeight:600}}>Cancel</button>
+              <button onClick={confirmDrink} style={{flex:2,background:"#c0392b",border:"none",color:"#fff",borderRadius:12,padding:"14px 0",fontSize:14,fontWeight:700}}>Confirm — Drink It 🍷</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Header */}
-      <div style={{ background:"linear-gradient(180deg,#1c1008,#0e0a05)", borderBottom:"1px solid rgba(201,168,76,0.1)", padding:"20px 18px 18px" }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:10, marginBottom:18 }}>
+      <div style={{background:"#fff",borderBottom:"1px solid #f0f0f0",padding:"16px 18px 14px",position:"sticky",top:0,zIndex:100}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
           <div>
-            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:2 }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" strokeWidth="1.5"><path d="M8 3h8M9 3c0 0-2 4-2 8s1.5 5 5 5 5-1 5-5-2-8-2-8M12 16v5M9 21h6"/></svg>
-              <h1 style={{ fontFamily:"Playfair Display,serif", fontSize:22, fontWeight:700, color:"#e8dcc8" }}>Cave à Vin</h1>
-            </div>
-            <p style={{ color:"#3a2a15", fontSize:9, letterSpacing:"0.12em", textTransform:"uppercase" }}>Personal Wine Collection</p>
+            <h1 style={{fontFamily:"'DM Serif Display',serif",fontSize:26,color:"#1a1a1a",lineHeight:1}}>Cave à Vin</h1>
+            <p style={{fontSize:11,color:"#bbb",marginTop:2,letterSpacing:"0.05em"}}>{stats.bottles} bottles · ${stats.value.toLocaleString()} value</p>
           </div>
-          <div style={{ display:"flex", gap:8 }}>
-            <button onClick={()=>setShowImport(true)} style={{ background:"rgba(201,168,76,0.07)", border:"1px solid rgba(201,168,76,0.22)", color:"#C9A84C", borderRadius:8, padding:"8px 14px", cursor:"pointer", fontSize:11, fontFamily:"inherit", display:"flex", alignItems:"center", gap:5 }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              AI Import
-            </button>
-              <button onClick={()=>setShowApiKey(true)} title="API Key" style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", color:"#5a4a35", borderRadius:8, padding:"8px 10px", cursor:"pointer", fontSize:14 }}>⚙️</button>
-            <button onClick={()=>setShowAdd(true)} style={{ background:"linear-gradient(135deg,#C9A84C,#a07830)", border:"none", color:"#1a1209", borderRadius:8, padding:"8px 16px", cursor:"pointer", fontSize:11, fontWeight:700, fontFamily:"inherit" }}>+ Add</button>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={()=>setShowApiKey(true)} style={{background:"#f5f5f5",border:"none",borderRadius:10,padding:"8px 10px",fontSize:16,color:"#888"}}>⚙️</button>
+            <button onClick={()=>setShowImport(true)} style={{background:"#f5f5f5",border:"none",borderRadius:10,padding:"8px 12px",fontSize:12,fontWeight:600,color:"#1a1a1a"}}>Import</button>
+            <button onClick={()=>setShowAdd(true)} style={{background:"#1a1a1a",border:"none",borderRadius:10,padding:"8px 16px",fontSize:12,fontWeight:600,color:"#fff"}}>+ Add</button>
           </div>
         </div>
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8 }}>
-          {[["Bottles",stats.total,""],["Value",`$${stats.value.toLocaleString()}`, ""],["Avg",stats.avg," pts"],["Peak",stats.peak,""]].map(([l,v,s])=>(
-            <div key={l} style={{ background:"rgba(201,168,76,0.03)", border:"1px solid rgba(201,168,76,0.08)", borderRadius:8, padding:"10px 10px" }}>
-              <div style={{ fontSize:9, color:"#3a2a15", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:4 }}>{l}</div>
-              <div style={{ fontSize:17, fontWeight:600, color:"#C9A84C" }}>{v}<span style={{ fontSize:10, color:"#5a4a35" }}>{s}</span></div>
-            </div>
-          ))}
+
+        {/* Search */}
+        <div style={{position:"relative",marginBottom:12}}>
+          <svg style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)"}} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search wines, regions, grapes…" style={{background:"#f7f5f2",border:"none",borderRadius:10,color:"#1a1a1a",padding:"10px 12px 10px 34px",fontSize:13,width:"100%",outline:"none"}}/>
+        </div>
+
+        {/* Type filters */}
+        <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:2}}>
+          {TYPES.map(t=>{
+            const wc=WINE_COLORS[t];
+            const active=filterType===t;
+            return(
+              <button key={t} onClick={()=>setFilterType(t)} style={{background:active?(wc?wc.bg:"#1a1a1a"):"#f5f5f5",color:active?"#fff":"#666",border:"none",borderRadius:20,padding:"6px 14px",fontSize:12,fontWeight:active?600:400,whiteSpace:"nowrap",flexShrink:0}}>{t}</button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Filters */}
-      <div style={{ borderBottom:"1px solid rgba(255,255,255,0.04)", padding:"10px 18px", overflowX:"auto" }}>
-        <div style={{ display:"flex", gap:8, alignItems:"center", minWidth:"max-content" }}>
-          <div style={{ position:"relative" }}>
-            <svg style={{ position:"absolute", left:9, top:"50%", transform:"translateY(-50%)" }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#3a2a15" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search…" style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:7, color:"#e8dcc8", padding:"6px 9px 6px 26px", fontSize:11, width:120, outline:"none", fontFamily:"inherit" }}/>
-          </div>
-          <div style={{ display:"flex", gap:4 }}>{TYPES.map(t=>pill(filterType===t,()=>setFilterType(t),t))}</div>
-          <select value={filterRegion} onChange={e=>setFilterRegion(e.target.value)} style={{ ...selStyle, color:filterRegion!=="All"?"#C9A84C":"#5a4a35" }}>
-            <option value="All">All Regions</option>
-            {regions.filter(r=>r!=="All").map(r=><option key={r} value={r}>{r}</option>)}
-          </select>
-          <select value={filterVintage} onChange={e=>setFilterVintage(e.target.value)} style={{ ...selStyle, color:filterVintage?"#C9A84C":"#5a4a35" }}>
-            <option value="">All Vintages</option>
-            {vintages.map(v=><option key={v} value={v}>{v}</option>)}
-          </select>
-          <select value={sortBy} onChange={e=>setSortBy(e.target.value)} style={selStyle}>
-            <option value="name">Name</option><option value="vintage">Vintage</option><option value="rating">Rating</option><option value="value">Value</option>
-          </select>
-        </div>
+      {/* Sort bar */}
+      <div style={{display:"flex",gap:6,padding:"10px 18px",alignItems:"center",overflowX:"auto"}}>
+        <span style={{fontSize:11,color:"#bbb",flexShrink:0}}>Sort:</span>
+        {[["name","Name"],["vintage","Vintage"],["rating","Rating"],["value","Value"]].map(([v,l])=>(
+          <button key={v} onClick={()=>setSortBy(v)} style={{background:sortBy===v?"#1a1a1a":"transparent",color:sortBy===v?"#fff":"#888",border:sortBy===v?"none":"1px solid #e8e8e8",borderRadius:20,padding:"4px 12px",fontSize:11,fontWeight:sortBy===v?600:400,flexShrink:0}}>{l}</button>
+        ))}
+        <span style={{marginLeft:"auto",fontSize:11,color:"#bbb",flexShrink:0}}>{filtered.length} wines</span>
       </div>
 
-      {/* Grid */}
-      <div style={{ padding:"16px 18px" }}>
+      {/* Wine List */}
+      <div style={{padding:"4px 18px 100px"}}>
         {filtered.length===0 ? (
-          <div style={{ textAlign:"center", padding:"60px 0", color:"#2a1f0e" }}>
-            <div style={{ fontSize:36, marginBottom:10 }}>🍷</div>
-            <div style={{ fontFamily:"Playfair Display,serif", fontSize:16, marginBottom:4 }}>No wines found</div>
-            <div style={{ fontSize:12 }}>Adjust filters or import a file</div>
+          <div style={{textAlign:"center",padding:"60px 0",color:"#ccc"}}>
+            <div style={{fontSize:48,marginBottom:12}}>🍷</div>
+            <div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:"#aaa",marginBottom:6}}>No wines found</div>
+            <div style={{fontSize:13}}>Try a different search or filter</div>
           </div>
         ) : (
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))", gap:14 }}>
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {filtered.map(wine=>{
               const status=drinkingStatus(wine);
-              return (
-                <div key={wine.id} className="wc" onClick={()=>setSelected(wine)}
-                  style={{ background:"linear-gradient(145deg,#181006,#0f0c05)", border:"1px solid rgba(255,255,255,0.05)", borderRadius:11, padding:14, cursor:"pointer" }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-                    <div style={{ display:"flex", alignItems:"center", gap:5 }}>
-                      <div style={{ width:7,height:7,borderRadius:"50%",background:wine.color||"#722F37",boxShadow:`0 0 5px ${wine.color||"#722F37"}60` }}/>
-                      <span style={{ fontSize:9,color:"#3a2a15",textTransform:"uppercase",letterSpacing:"0.07em" }}>{wine.type}·{wine.vintage}</span>
+              const wc=WINE_COLORS[wine.type]||WINE_COLORS.Red;
+              return(
+                <div key={wine.id} onClick={()=>setSelected(wine)} style={{background:"#fff",borderRadius:16,padding:"14px 16px",display:"flex",gap:14,alignItems:"center",boxShadow:"0 1px 4px rgba(0,0,0,0.05)",cursor:"pointer",position:"relative"}}>
+                  <WineLabel wine={wine} size={60}/>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                      <span style={{fontSize:10,color:status.color,fontWeight:600}}>{status.label}</span>
                     </div>
-                    <span style={{ fontSize:9,color:status.color,background:status.bg,border:`1px solid ${status.color}30`,borderRadius:12,padding:"2px 7px" }}>{status.label}</span>
+                    <h3 style={{fontFamily:"'DM Serif Display',serif",fontSize:15,color:"#1a1a1a",marginBottom:2,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{wine.name}</h3>
+                    <div style={{fontSize:12,color:"#aaa",marginBottom:6,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{wine.producer} · {wine.region}</div>
+                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <span style={{fontSize:11,color:"#888"}}>🍾 {wine.bottles} left</span>
+                      <span style={{fontSize:11,color:"#888"}}>{wine.vintage}</span>
+                      {wine.rating>0&&<span style={{fontSize:11,color:"#888"}}>⭐ {wine.rating}</span>}
+                      {wine.currentValue>0&&<span style={{fontSize:11,color:"#27ae60",fontWeight:600}}>${wine.currentValue.toLocaleString()}</span>}
+                    </div>
                   </div>
-                  <h3 style={{ fontFamily:"Playfair Display,serif",fontSize:14,fontWeight:600,color:"#e8dcc8",marginBottom:2,lineHeight:1.3 }}>{wine.name||"Unknown"}</h3>
-                  <div style={{ fontSize:10,color:"#3a2a15",marginBottom:10 }}>{wine.producer}</div>
-                  <div style={{ display:"flex",justifyContent:"space-between",marginBottom:8 }}>
-                    <span style={{ fontSize:10,color:"#5a4a35" }}>📍{wine.region}</span>
-                    <span style={{ fontSize:10,color:"#5a4a35" }}>🍾{wine.bottles}</span>
-                  </div>
-                  <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8 }}>
-                    <StarRating rating={wine.rating||88}/>
-                    {wine.currentValue?<span style={{ fontSize:11,color:"#C9A84C" }}>${wine.currentValue.toLocaleString()}</span>:null}
-                  </div>
-                  <DrinkingBar wine={wine}/>
-                  {wine.notes&&<p style={{ fontSize:10,color:"#2a1f0e",marginTop:8,lineHeight:1.5,fontStyle:"italic",overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical" }}>"{wine.notes}"</p>}
+                  {/* Drink button */}
+                  <button
+                    onClick={(e)=>drinkBottle(wine,e)}
+                    style={{background:wine.bottles>0?"#fef0f0":"#f5f5f5",border:"none",borderRadius:12,padding:"10px 12px",flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",gap:2}}
+                    title="Drink a bottle"
+                  >
+                    <span style={{fontSize:20}}>🍷</span>
+                    <span style={{fontSize:9,color:wine.bottles>0?"#e74c3c":"#ccc",fontWeight:600}}>Drink</span>
+                  </button>
                 </div>
               );
             })}
           </div>
         )}
-        <div style={{ marginTop:10,textAlign:"right",fontSize:10,color:"#1e160a" }}>{filtered.length} of {wines.length} wines</div>
       </div>
 
+      {/* Modals */}
       {selected&&<WineModal wine={selected} onClose={()=>setSelected(null)} onSave={handleSave} onDelete={handleDelete}/>}
-      {showAdd&&<WineModal wine={{}} onClose={()=>setShowAdd(false)} onSave={handleSave} onDelete={()=>{}}/>}
+      {showAdd&&<WineModal wine={{type:"Red"}} onClose={()=>setShowAdd(false)} onSave={handleSave} onDelete={()=>{}}/>}
       {showImport&&<ImportModal onClose={()=>setShowImport(false)} onImport={handleImport}/>}
       {showApiKey&&(
-        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.88)", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }} onClick={e=>e.target===e.currentTarget&&setShowApiKey(false)}>
-          <div style={{ background:"#1a1209", border:"1px solid rgba(201,168,76,0.2)", borderRadius:14, width:"100%", maxWidth:420, padding:28, position:"relative" }}>
-            <button onClick={()=>setShowApiKey(false)} style={{ position:"absolute", top:12, right:16, background:"none", border:"none", color:"#4a3a22", fontSize:22, cursor:"pointer" }}>×</button>
-            <h2 style={{ fontFamily:"Playfair Display,serif", fontSize:18, color:"#e8dcc8", marginBottom:16 }}>⚙️ Settings</h2>
-            <ApiKeyPrompt onSaved={()=>setShowApiKey(false)}/>
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setShowApiKey(false)}>
+          <div style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:480,padding:"24px 24px 48px"}} onClick={e=>e.stopPropagation()}>
+            <div style={{width:36,height:4,background:"#e0e0e0",borderRadius:2,margin:"0 auto 20px"}}/>
+            <h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:22,color:"#1a1a1a",marginBottom:20}}>⚙️ Settings</h2>
+            <ApiKeyPrompt onSaved={()=>{setShowApiKey(false);showToast("API key saved");}}/>
           </div>
         </div>
       )}
@@ -494,13 +487,6 @@ function App() {
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<App/>);
-
-// Register service worker
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(()=>{});
-  });
-}
 </script>
 </body>
 </html>
