@@ -76,11 +76,18 @@ const WineLabel = ({ wine, size = 80 }) => {
   );
 };
 
-const AI_PROMPT = `Extract ALL wine entries and return ONLY a valid JSON array, no markdown.
-Each object: { "name":string, "producer":string, "region":string, "country":string, "vintage":number, "type":"Red"|"White"|"Sparkling"|"Rosé"|"Dessert", "grape":string, "bottles":number, "purchasePrice":number, "currentValue":number, "drinkFrom":number, "drinkUntil":number, "location":string, "rating":number, "notes":string }
-Map flexibly: appellation→region, qty→bottles, price→purchasePrice, varietal→grape, bin→location, score→rating.
-Estimate drinkFrom/drinkUntil from vintage if missing: Red +5-20yr, White +2-8yr, Sparkling +3-10yr.
-Return ONLY the JSON array.`;
+const AI_PROMPT = `You are a wine data extractor. Extract ALL wine entries from the data provided.
+CRITICAL: Return ONLY a raw JSON array. No markdown. No backticks. No explanation. No trailing commas. Just the array.
+Start your response with [ and end with ]
+Each object must use ONLY double quotes and have these fields:
+{"name":"string","producer":"string","region":"string","country":"string","vintage":2015,"type":"Red","grape":"string","bottles":1,"purchasePrice":0,"currentValue":0,"drinkFrom":2020,"drinkUntil":2035,"location":"string","rating":0,"notes":"string"}
+Rules:
+- type must be one of: Red, White, Sparkling, Rose, Dessert
+- all numbers must be plain numbers, not strings
+- if a value is unknown use "" for strings and 0 for numbers
+- Map: appellation->region, qty->bottles, varietal->grape, bin->location, score->rating
+- Estimate drinkFrom/drinkUntil from vintage: Red +5 to +20, White +2 to +8
+RETURN ONLY THE JSON ARRAY STARTING WITH [`;
 
 const ApiKeyPrompt = ({ onSaved }) => {
   const [key, setKey] = React.useState(localStorage.getItem("cav_api_key")||"");
@@ -109,11 +116,13 @@ const ImportModal = ({ onClose, onImport }) => {
     setError(""); setStage("parsing");
     try {
       const isPdf = file.type==="application/pdf";
+      const isImage = file.type.startsWith("image/") || /\.(jpg|jpeg|png|heic|heif|webp)$/i.test(file.name);
       const isText = file.type==="text/plain"||file.type==="text/csv"||/\.(txt|csv)$/i.test(file.name);
       const isSheet = /\.(xlsx|xls)$/i.test(file.name);
-      if(!isPdf&&!isText&&!isSheet) throw new Error("Please upload a PDF, Excel, CSV or text file.");
+      if(!isPdf&&!isImage&&!isText&&!isSheet) throw new Error("Please upload a photo, PDF, Excel, or CSV file.");
       let userContent;
       if(isPdf){ const b64=await toBase64(file); userContent=[{type:"document",source:{type:"base64",media_type:"application/pdf",data:b64}},{type:"text",text:AI_PROMPT}]; }
+      else if(isImage){ const b64=await toBase64(file); const mt=file.type||"image/jpeg"; userContent=[{type:"image",source:{type:"base64",media_type:mt,data:b64}},{type:"text",text:AI_PROMPT}]; }
       else if(isText){ const text=await file.text(); userContent=[{type:"text",text:`File contents:\n\n${text}\n\n${AI_PROMPT}`}]; }
       else { const text=await xlsxToText(file); userContent=[{type:"text",text:`File contents:\n\n${text}\n\n${AI_PROMPT}`}]; }
       const apiKey=localStorage.getItem("cav_api_key");
@@ -124,17 +133,17 @@ const ImportModal = ({ onClose, onImport }) => {
       const raw=data.content?.map(b=>b.text||"").join("")||"";
       let parsed;
       try{
-        const clean=raw.replace(/```json|```/g,"").trim();
+        // Clean the response thoroughly
+        let clean=raw.replace(/```json|```/g,"").trim();
+        // Fix common JSON issues: trailing commas, single quotes
+        clean=clean.replace(/,\s*([}\]])/g,"$1");
+        clean=clean.replace(/'/g,'"');
         const start=clean.indexOf("[");
         const end=clean.lastIndexOf("]");
-        if(start===-1||end===-1) throw new Error("no array");
+        if(start===-1||end===-1) throw new Error("No wine data found in file.");
         parsed=JSON.parse(clean.slice(start,end+1));
       } catch(e1){
-        // Try to extract individual objects even if array is truncated
-        const matches=[...raw.matchAll(/\{[^{}]*"name"[^{}]*\}/g)];
-        if(matches.length===0) throw new Error("Could not read file. Please try CSV format instead.");
-        try{ parsed=matches.map(m=>JSON.parse(m[0])); }
-        catch(e2){ throw new Error("Could not read file. Please try CSV format instead."); }
+        throw new Error("Import failed: "+e1.message+". Please try saving as CSV and importing that instead.");
       }
       const wines=parsed.map((w,i)=>({...w,id:Date.now()+i,rating:w.rating||null,purchasePrice:w.purchasePrice||null,currentValue:w.currentValue||null,bottles:w.bottles||1,drinkFrom:w.drinkFrom||(w.vintage+4),drinkUntil:w.drinkUntil||(w.vintage+15)}));
       setParsedWines(wines); setCheckedIds(new Set(wines.map(w=>w.id))); setStage("preview");
@@ -160,11 +169,11 @@ const ImportModal = ({ onClose, onImport }) => {
           <>
             <div onClick={()=>fileRef.current?.click()} style={{border:"2px dashed #e0e0e0",borderRadius:16,padding:"40px 20px",textAlign:"center",cursor:"pointer",background:"#fafafa"}}>
               <div style={{fontSize:40,marginBottom:12}}>📂</div>
-              <div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:"#1a1a1a",marginBottom:6}}>Choose your file</div>
-              <div style={{color:"#aaa",fontSize:13,marginBottom:20}}>Excel, CSV or PDF supported</div>
+              <div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:"#1a1a1a",marginBottom:6}}>Choose a file or photo</div>
+              <div style={{color:"#aaa",fontSize:13,marginBottom:20}}>Excel, CSV, PDF or screenshot</div>
               <span style={{background:"#1a1a1a",color:"#fff",borderRadius:10,padding:"10px 28px",fontSize:13,fontWeight:600}}>Browse Files</span>
             </div>
-            <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.pdf,.txt,text/csv,text/plain,application/pdf" style={{display:"none"}} onChange={e=>e.target.files[0]&&parseFile(e.target.files[0])}/>
+            <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.pdf,.txt,.jpg,.jpeg,.png,.heic,text/csv,text/plain,application/pdf,image/*" style={{display:"none"}} onChange={e=>e.target.files[0]&&parseFile(e.target.files[0])}/>
             {error&&error!=="API_KEY_NEEDED"&&<div style={{marginTop:12,background:"#fef0f0",border:"1px solid #fcc",borderRadius:10,padding:"10px 14px",color:"#c0392b",fontSize:12}}>{error}</div>}
             {error==="API_KEY_NEEDED"&&<ApiKeyPrompt onSaved={()=>setError("")}/>}
           </>
