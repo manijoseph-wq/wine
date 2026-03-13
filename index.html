@@ -12,213 +12,155 @@
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
     *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
     body{background:#f7f5f2;color:#1a1a1a;font-family:'DM Sans',sans-serif;min-height:100vh}
-    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#ddd;border-radius:2px}
-    input,select,textarea{font-family:'DM Sans',sans-serif}
-    button{font-family:'DM Sans',sans-serif;cursor:pointer}
+    input,select,textarea,button{font-family:'DM Sans',sans-serif}
+    button{cursor:pointer}
     #root{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
   </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useMemo, useRef, useCallback, useEffect } = React;
+const { useState, useMemo, useRef, useEffect } = React;
 
 const WINE_COLORS = {
-  Red: { bg:'#c0392b', light:'#fdf1f0', badge:'#c0392b' },
-  White: { bg:'#d4a017', light:'#fdfbf0', badge:'#b8860b' },
-  Sparkling: { bg:'#2980b9', light:'#f0f7fd', badge:'#2471a3' },
-  Rosé: { bg:'#e91e8c', light:'#fdf0f7', badge:'#c2185b' },
-  Dessert: { bg:'#8e44ad', light:'#f7f0fd', badge:'#7d3c98' },
+  Red:      { bg:'#c0392b', light:'#fdf1f0' },
+  White:    { bg:'#c8960c', light:'#fdfbf0' },
+  Sparkling:{ bg:'#2980b9', light:'#f0f7fd' },
+  Rose:     { bg:'#e91e8c', light:'#fdf0f7' },
+  Dessert:  { bg:'#8e44ad', light:'#f7f0fd' },
 };
 
-const SAMPLE_WINES = [
-  { id:1, name:"Château Margaux", producer:"Château Margaux", region:"Bordeaux", country:"France", vintage:2015, type:"Red", grape:"Cabernet Sauvignon", bottles:6, purchasePrice:580, currentValue:820, drinkFrom:2022, drinkUntil:2045, location:"Rack A-1", rating:97, notes:"Exceptional depth and elegance. Dark fruit, cedar, and silky tannins." },
-  { id:2, name:"Opus One", producer:"Opus One Winery", region:"Napa Valley", country:"USA", vintage:2018, type:"Red", grape:"Cabernet Sauvignon", bottles:3, purchasePrice:350, currentValue:420, drinkFrom:2024, drinkUntil:2040, location:"Rack B-3", rating:95, notes:"Plush blackcurrant, mocha and violet. Beautiful structure." },
-  { id:3, name:"Domaine Leflaive Montrachet", producer:"Domaine Leflaive", region:"Burgundy", country:"France", vintage:2017, type:"White", grape:"Chardonnay", bottles:2, purchasePrice:890, currentValue:1100, drinkFrom:2021, drinkUntil:2035, location:"Rack C-1", rating:98, notes:"Transcendent minerality. Hazelnut, white flowers, electric acidity." },
-  { id:4, name:"Sassicaia", producer:"Tenuta San Guido", region:"Tuscany", country:"Italy", vintage:2016, type:"Red", grape:"Cabernet Sauvignon", bottles:12, purchasePrice:195, currentValue:280, drinkFrom:2023, drinkUntil:2038, location:"Rack A-4", rating:96, notes:"The original Super Tuscan. Graphite, tobacco and dark cherry." },
-  { id:5, name:"Dom Pérignon", producer:"Moët & Chandon", region:"Champagne", country:"France", vintage:2012, type:"Sparkling", grape:"Chardonnay / Pinot Noir", bottles:4, purchasePrice:200, currentValue:280, drinkFrom:2020, drinkUntil:2035, location:"Rack E-1", rating:96, notes:"Crystalline purity. Toast, almond, white peach and extraordinary fine mousse." },
-];
+const TYPES = ["All","Red","White","Sparkling","Rose","Dessert"];
 
-const TYPES = ["All","Red","White","Sparkling","Rosé","Dessert"];
-
-const drinkingStatus = (wine) => {
-  const year = new Date().getFullYear();
-  if (year < wine.drinkFrom) return { label:"Too Young", color:"#3498db" };
-  if (year > wine.drinkUntil) return { label:"Past Peak", color:"#e74c3c" };
-  const pct = (year - wine.drinkFrom) / (wine.drinkUntil - wine.drinkFrom);
-  if (pct < 0.4) return { label:"Ready to Drink", color:"#27ae60" };
-  if (pct < 0.75) return { label:"Peak Now", color:"#f39c12" };
-  return { label:"Drink Soon", color:"#e67e22" };
-};
-
-// Wine label art generator
-const WineLabel = ({ wine, size = 80 }) => {
+const WineLabel = ({ wine, size=60 }) => {
   const wc = WINE_COLORS[wine.type] || WINE_COLORS.Red;
-  const initials = wine.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  const initials = (wine.name||"?").split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
   return (
-    <div style={{ width:size, height:size*1.35, borderRadius:6, overflow:'hidden', flexShrink:0, boxShadow:'0 2px 12px rgba(0,0,0,0.12)', position:'relative', background:'#fff' }}>
-      <div style={{ position:'absolute', inset:0, background:`linear-gradient(160deg, ${wc.bg}22, ${wc.bg}44)` }}/>
-      <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:6 }}>
-        <div style={{ width:size*0.55, height:size*0.55, borderRadius:'50%', background:`linear-gradient(135deg, ${wc.bg}, ${wc.bg}cc)`, display:'flex', alignItems:'center', justifyContent:'center', marginBottom:4 }}>
-          <span style={{ color:'#fff', fontSize:size*0.2, fontWeight:700, fontFamily:"'DM Serif Display',serif" }}>{initials}</span>
+    <div style={{width:size,height:size*1.35,borderRadius:6,overflow:'hidden',flexShrink:0,boxShadow:'0 2px 10px rgba(0,0,0,0.1)',position:'relative',background:'#fff'}}>
+      <div style={{position:'absolute',inset:0,background:`linear-gradient(160deg,${wc.bg}18,${wc.bg}38)`}}/>
+      <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:4}}>
+        <div style={{width:size*0.5,height:size*0.5,borderRadius:'50%',background:`linear-gradient(135deg,${wc.bg},${wc.bg}bb)`,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:3}}>
+          <span style={{color:'#fff',fontSize:size*0.18,fontWeight:700,fontFamily:"'DM Serif Display',serif"}}>{initials}</span>
         </div>
-        <div style={{ fontSize:size*0.1, color:wc.bg, fontWeight:600, textAlign:'center', lineHeight:1.2, letterSpacing:'0.03em' }}>{wine.vintage}</div>
+        <div style={{fontSize:size*0.1,color:wc.bg,fontWeight:600}}>{wine.vintage||''}</div>
       </div>
-      <div style={{ position:'absolute', bottom:0, left:0, right:0, background:wc.bg, height:size*0.18, display:'flex', alignItems:'center', justifyContent:'center' }}>
-        <span style={{ color:'#fff', fontSize:size*0.085, fontWeight:600, letterSpacing:'0.08em', textTransform:'uppercase' }}>{wine.type}</span>
+      <div style={{position:'absolute',bottom:0,left:0,right:0,background:wc.bg,height:size*0.18,display:'flex',alignItems:'center',justifyContent:'center'}}>
+        <span style={{color:'#fff',fontSize:size*0.08,fontWeight:600,letterSpacing:'0.06em',textTransform:'uppercase'}}>{wine.type||''}</span>
       </div>
     </div>
   );
 };
 
-const AI_PROMPT = `You are a wine data extractor. Extract ALL wine entries from the data provided.
-CRITICAL: Return ONLY a raw JSON array. No markdown. No backticks. No explanation. No trailing commas. Just the array.
-Start your response with [ and end with ]
-Each object must use ONLY double quotes and have these fields:
-{"name":"string","producer":"string","region":"string","country":"string","vintage":2015,"type":"Red","grape":"string","bottles":1,"purchasePrice":0,"currentValue":0,"drinkFrom":2020,"drinkUntil":2035,"location":"string","rating":0,"notes":"string"}
-Rules:
-- type must be one of: Red, White, Sparkling, Rose, Dessert
-- all numbers must be plain numbers, not strings
-- if a value is unknown use "" for strings and 0 for numbers
-- Map: appellation->region, qty->bottles, varietal->grape, bin->location, score->rating
-- Estimate drinkFrom/drinkUntil from vintage: Red +5 to +20, White +2 to +8
-RETURN ONLY THE JSON ARRAY STARTING WITH [`;
-
-const ApiKeyPrompt = ({ onSaved }) => {
-  const [key, setKey] = React.useState(localStorage.getItem("cav_api_key")||"");
-  const save = () => { if(key.trim()){localStorage.setItem("cav_api_key", key.trim()); onSaved();} };
-  return (
-    <div style={{ background:'#fff8f0', border:'1px solid #ffe0b2', borderRadius:12, padding:20, marginTop:16 }}>
-      <div style={{ fontSize:13, fontWeight:600, color:'#e65100', marginBottom:6 }}>🔑 API Key Required</div>
-      <div style={{ fontSize:12, color:'#888', marginBottom:12, lineHeight:1.6 }}>Enter your Anthropic API key to enable AI import. Saved on your device only.</div>
-      <input value={key} onChange={e=>setKey(e.target.value)} placeholder="sk-ant-api03-..." style={{ border:'1px solid #ddd', borderRadius:8, color:'#1a1a1a', padding:'10px 12px', fontSize:12, width:'100%', outline:'none', marginBottom:10, background:'#fff' }}/>
-      <button onClick={save} disabled={!key.trim()} style={{ background:key.trim()?'#1a1a1a':'#eee', border:'none', color:key.trim()?'#fff':'#aaa', borderRadius:8, padding:'10px 0', fontSize:13, fontWeight:600, width:'100%' }}>Save API Key</button>
-    </div>
-  );
+const downloadTemplate = () => {
+  const ws = XLSX.utils.aoa_to_sheet([
+    ["name","producer","region","country","vintage","type","grape","bottles","location","purchasePrice","currentValue","drinkFrom","drinkUntil","rating","notes"],
+    ["Chateau Margaux","Chateau Margaux","Bordeaux","France",2015,"Red","Cabernet Sauvignon",6,"Rack A-1",580,820,2022,2045,97,"Example note"],
+  ]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Wines");
+  XLSX.writeFile(wb, "cave-a-vin-template.xlsx");
 };
 
 const ImportModal = ({ onClose, onImport }) => {
-  const [stage, setStage] = useState("upload");
-  const [parsedWines, setParsedWines] = useState([]);
-  const [checkedIds, setCheckedIds] = useState(new Set());
   const [error, setError] = useState("");
+  const [preview, setPreview] = useState(null);
+  const [checkedIds, setCheckedIds] = useState(new Set());
   const fileRef = useRef();
 
-  const toBase64 = (file) => new Promise((res,rej) => { const r=new FileReader(); r.onload=()=>res(r.result.split(",")[1]); r.onerror=rej; r.readAsDataURL(file); });
-  const xlsxToText = async (file) => { const ab=await file.arrayBuffer(); const wb=XLSX.read(ab,{type:"array"}); return wb.SheetNames.map(n=>`Sheet: ${n}\n${XLSX.utils.sheet_to_csv(wb.Sheets[n])}`).join("\n\n"); };
-
-  const parseFile = useCallback(async (file) => {
-    setError(""); setStage("parsing");
+  const handleFile = async (file) => {
+    setError("");
     try {
-      const isPdf = file.type==="application/pdf";
-      const isImage = file.type.startsWith("image/") || /\.(jpg|jpeg|png|heic|heif|webp)$/i.test(file.name);
-      const isText = file.type==="text/plain"||file.type==="text/csv"||/\.(txt|csv)$/i.test(file.name);
-      const isSheet = /\.(xlsx|xls)$/i.test(file.name);
-      if(!isPdf&&!isImage&&!isText&&!isSheet) throw new Error("Please upload a photo, PDF, Excel, or CSV file.");
-      let userContent;
-      if(isPdf){ const b64=await toBase64(file); userContent=[{type:"document",source:{type:"base64",media_type:"application/pdf",data:b64}},{type:"text",text:AI_PROMPT}]; }
-      else if(isImage){ const b64=await toBase64(file); const mt=file.type||"image/jpeg"; userContent=[{type:"image",source:{type:"base64",media_type:mt,data:b64}},{type:"text",text:AI_PROMPT}]; }
-      else if(isText){ const text=await file.text(); userContent=[{type:"text",text:`File contents:\n\n${text}\n\n${AI_PROMPT}`}]; }
-      else { const text=await xlsxToText(file); userContent=[{type:"text",text:`File contents:\n\n${text}\n\n${AI_PROMPT}`}]; }
-      const apiKey=localStorage.getItem("cav_api_key");
-      if(!apiKey) throw new Error("NO_API_KEY");
-      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:8000,messages:[{role:"user",content:userContent}]})});
-      if(!res.ok){const e=await res.json();throw new Error(`API ${res.status}: ${e.error?.message||JSON.stringify(e)}`);}
-      const data=await res.json();
-      const raw=data.content?.map(b=>b.text||"").join("")||"";
-      let parsed;
-      try{
-        // Clean the response thoroughly
-        let clean=raw.replace(/```json|```/g,"").trim();
-        // Fix common JSON issues: trailing commas, single quotes
-        clean=clean.replace(/,\s*([}\]])/g,"$1");
-        clean=clean.replace(/'/g,'"');
-        const start=clean.indexOf("[");
-        const end=clean.lastIndexOf("]");
-        if(start===-1||end===-1) throw new Error("No wine data found in file.");
-        parsed=JSON.parse(clean.slice(start,end+1));
-      } catch(e1){
-        throw new Error("Import failed: "+e1.message+". Please try saving as CSV and importing that instead.");
-      }
-      const wines=parsed.map((w,i)=>({...w,id:Date.now()+i,rating:w.rating||null,purchasePrice:w.purchasePrice||null,currentValue:w.currentValue||null,bottles:w.bottles||1,drinkFrom:w.drinkFrom||(w.vintage+4),drinkUntil:w.drinkUntil||(w.vintage+15)}));
-      setParsedWines(wines); setCheckedIds(new Set(wines.map(w=>w.id))); setStage("preview");
+      const ab = await file.arrayBuffer();
+      const wb = XLSX.read(ab, {type:"array"});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {defval:""});
+      if(!rows.length) throw new Error("No data found in file.");
+      const wines = rows.map((r,i) => ({
+        id: Date.now()+i,
+        name: r.name||r.Name||r.WINE||r.Wine||r["Wine Name"]||"",
+        producer: r.producer||r.Producer||"",
+        region: r.region||r.Region||r.appellation||r.Appellation||"",
+        country: r.country||r.Country||"",
+        vintage: Number(r.vintage||r.Vintage||r.Year||r.year||0)||null,
+        type: r.type||r.Type||r.Color||r.color||"Red",
+        grape: r.grape||r.Grape||r.varietal||r.Varietal||"",
+        bottles: Number(r.bottles||r.Bottles||r.qty||r.Qty||r["Btl Qty"]||1)||1,
+        location: r.location||r.Location||r.bin||r.Bin||"",
+        purchasePrice: Number(r.purchasePrice||r["Purchase Price"]||r.price||r.Price||0)||null,
+        currentValue: Number(r.currentValue||r["Current Value"]||r.value||r.Value||0)||null,
+        drinkFrom: Number(r.drinkFrom||r["Drink From"]||0)||null,
+        drinkUntil: Number(r.drinkUntil||r["Drink Until"]||0)||null,
+        rating: Number(r.rating||r.Rating||r.score||r.Score||0)||null,
+        notes: r.notes||r.Notes||r["Tasting Notes"]||"",
+      })).filter(w=>w.name);
+      if(!wines.length) throw new Error("No wines found. Make sure your file has a 'name' column.");
+      setPreview(wines);
+      setCheckedIds(new Set(wines.map(w=>w.id)));
     } catch(e) {
-      if(e.message==="NO_API_KEY") setError("API_KEY_NEEDED");
-      else setError(e.message||"Failed to parse.");
-      setStage("upload");
+      setError(e.message||"Could not read file. Please use the template.");
     }
-  },[]);
+  };
 
-  const toggle=(id)=>setCheckedIds(s=>{const n=new Set(s);n.has(id)?n.delete(id):n.add(id);return n;});
+  const toggle = (id) => setCheckedIds(s=>{const n=new Set(s);n.has(id)?n.delete(id):n.add(id);return n;});
 
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:640,maxHeight:"90vh",overflow:"auto",padding:"24px 20px 40px",position:"relative"}}>
-        <div style={{width:36,height:4,background:"#e0e0e0",borderRadius:2,margin:"0 auto 20px"}}/>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-          <h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:22,color:"#1a1a1a"}}>AI Import</h2>
-          <button onClick={onClose} style={{background:"#f5f5f5",border:"none",borderRadius:"50%",width:32,height:32,fontSize:18,color:"#888",display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+      <div style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:640,maxHeight:"90vh",overflow:"auto",padding:"8px 20px 48px"}}>
+        <div style={{width:36,height:4,background:"#e0e0e0",borderRadius:2,margin:"12px auto 20px"}}/>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+          <h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:22}}>Import Wines</h2>
+          <button onClick={onClose} style={{background:"#f5f5f5",border:"none",borderRadius:"50%",width:32,height:32,fontSize:18,color:"#888"}}>×</button>
         </div>
-
-        {stage==="upload" && (
+        <p style={{fontSize:12,color:"#aaa",marginBottom:20,lineHeight:1.6}}>Upload an Excel file using our template. Only <strong>name</strong> is required.</p>
+        {!preview ? (
           <>
-            <div onClick={()=>fileRef.current?.click()} style={{border:"2px dashed #e0e0e0",borderRadius:16,padding:"40px 20px",textAlign:"center",cursor:"pointer",background:"#fafafa"}}>
-              <div style={{fontSize:40,marginBottom:12}}>📂</div>
-              <div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:"#1a1a1a",marginBottom:6}}>Choose a file or photo</div>
-              <div style={{color:"#aaa",fontSize:13,marginBottom:20}}>Excel, CSV, PDF or screenshot</div>
-              <span style={{background:"#1a1a1a",color:"#fff",borderRadius:10,padding:"10px 28px",fontSize:13,fontWeight:600}}>Browse Files</span>
+            <button onClick={downloadTemplate} style={{width:"100%",background:"#f7f5f2",border:"1px solid #e8e8e8",borderRadius:12,padding:"14px 0",fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              ⬇️ Download Template
+            </button>
+            <div onClick={()=>fileRef.current?.click()} style={{border:"2px dashed #e0e0e0",borderRadius:16,padding:"36px 20px",textAlign:"center",cursor:"pointer",background:"#fafafa",marginBottom:12}}>
+              <div style={{fontSize:36,marginBottom:10}}>📊</div>
+              <div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,marginBottom:4}}>Upload Excel File</div>
+              <div style={{color:"#bbb",fontSize:12,marginBottom:16}}>.xlsx or .xls files</div>
+              <span style={{background:"#1a1a1a",color:"#fff",borderRadius:10,padding:"10px 28px",fontSize:13,fontWeight:600}}>Choose File</span>
             </div>
-            <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.pdf,.txt,.jpg,.jpeg,.png,.heic,text/csv,text/plain,application/pdf,image/*" style={{display:"none"}} onChange={e=>e.target.files[0]&&parseFile(e.target.files[0])}/>
-            {error&&error!=="API_KEY_NEEDED"&&<div style={{marginTop:12,background:"#fef0f0",border:"1px solid #fcc",borderRadius:10,padding:"10px 14px",color:"#c0392b",fontSize:12}}>{error}</div>}
-            {error==="API_KEY_NEEDED"&&<ApiKeyPrompt onSaved={()=>setError("")}/>}
+            <input ref={fileRef} type="file" accept=".xlsx,.xls" style={{display:"none"}} onChange={e=>e.target.files[0]&&handleFile(e.target.files[0])}/>
+            {error&&<div style={{background:"#fef0f0",border:"1px solid #fcc",borderRadius:10,padding:"10px 14px",color:"#c0392b",fontSize:12}}>{error}</div>}
           </>
-        )}
-
-        {stage==="parsing" && (
-          <div style={{textAlign:"center",padding:"50px 0"}}>
-            <div style={{fontSize:48,marginBottom:16,animation:"pulse 1.5s ease-in-out infinite"}}>🍷</div>
-            <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}`}</style>
-            <div style={{fontFamily:"'DM Serif Display',serif",fontSize:20,color:"#1a1a1a",marginBottom:8}}>Analysing your wines…</div>
-            <div style={{color:"#aaa",fontSize:13}}>Claude is mapping your collection</div>
-          </div>
-        )}
-
-        {stage==="preview" && (
+        ) : (
           <>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-              <span style={{fontSize:13,color:"#888"}}>Found <strong style={{color:"#1a1a1a"}}>{parsedWines.length}</strong> wines</span>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+              <span style={{fontSize:13,color:"#888"}}>Found <strong style={{color:"#1a1a1a"}}>{preview.length}</strong> wines</span>
               <div style={{display:"flex",gap:12}}>
-                <button onClick={()=>setCheckedIds(new Set(parsedWines.map(w=>w.id)))} style={{background:"none",border:"none",color:"#1a1a1a",fontSize:12,fontWeight:600}}>Select All</button>
+                <button onClick={()=>setCheckedIds(new Set(preview.map(w=>w.id)))} style={{background:"none",border:"none",color:"#1a1a1a",fontSize:12,fontWeight:600}}>All</button>
                 <button onClick={()=>setCheckedIds(new Set())} style={{background:"none",border:"none",color:"#aaa",fontSize:12}}>None</button>
               </div>
             </div>
-            <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:20,maxHeight:320,overflowY:"auto"}}>
-              {parsedWines.map(w=>{
+            <div style={{display:"flex",flexDirection:"column",gap:8,maxHeight:340,overflowY:"auto",marginBottom:20}}>
+              {preview.map(w=>{
                 const on=checkedIds.has(w.id);
                 const wc=WINE_COLORS[w.type]||WINE_COLORS.Red;
                 return(
-                  <div key={w.id} onClick={()=>toggle(w.id)} style={{display:"flex",gap:12,alignItems:"center",padding:"12px 14px",borderRadius:12,border:`1.5px solid ${on?"#1a1a1a":"#f0f0f0"}`,background:on?"#fafafa":"#fff",cursor:"pointer"}}>
+                  <div key={w.id} onClick={()=>toggle(w.id)} style={{display:"flex",gap:12,alignItems:"center",padding:"11px 14px",borderRadius:12,border:`1.5px solid ${on?"#1a1a1a":"#f0f0f0"}`,cursor:"pointer"}}>
                     <div style={{width:18,height:18,borderRadius:5,border:`2px solid ${on?"#1a1a1a":"#ddd"}`,background:on?"#1a1a1a":"transparent",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
                       {on&&<svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#fff" strokeWidth="2.5"><path d="M2 6l3 3 5-5"/></svg>}
                     </div>
                     <div style={{width:8,height:8,borderRadius:"50%",background:wc.bg,flexShrink:0}}/>
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontWeight:600,fontSize:13,color:"#1a1a1a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{w.name}</div>
-                      <div style={{fontSize:11,color:"#aaa",marginTop:1}}>{w.vintage} · {w.region}</div>
+                      <div style={{fontWeight:600,fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{w.name}</div>
+                      <div style={{fontSize:11,color:"#aaa",marginTop:1}}>{[w.vintage,w.region].filter(Boolean).join(' · ')}</div>
                     </div>
-                    <div style={{fontSize:11,color:"#888",flexShrink:0}}>{w.bottles}🍾</div>
+                    <div style={{fontSize:11,color:"#888",flexShrink:0}}>×{w.bottles}</div>
                   </div>
                 );
               })}
             </div>
             <div style={{display:"flex",gap:10}}>
-              <button onClick={()=>setStage("upload")} style={{flex:1,background:"#f5f5f5",border:"none",color:"#888",borderRadius:12,padding:"13px 0",fontSize:13,fontWeight:600}}>Back</button>
-              <button disabled={checkedIds.size===0} onClick={()=>{onImport(parsedWines.filter(w=>checkedIds.has(w.id)));onClose();}} style={{flex:2,background:checkedIds.size>0?"#1a1a1a":"#eee",border:"none",color:checkedIds.size>0?"#fff":"#aaa",borderRadius:12,padding:"13px 0",fontSize:13,fontWeight:600}}>
+              <button onClick={()=>setPreview(null)} style={{flex:1,background:"#f5f5f5",border:"none",color:"#888",borderRadius:12,padding:"13px 0",fontSize:13,fontWeight:600}}>Back</button>
+              <button disabled={checkedIds.size===0} onClick={()=>{onImport(preview.filter(w=>checkedIds.has(w.id)));onClose();}} style={{flex:2,background:checkedIds.size>0?"#1a1a1a":"#eee",border:"none",color:checkedIds.size>0?"#fff":"#aaa",borderRadius:12,padding:"13px 0",fontSize:13,fontWeight:600}}>
                 Add {checkedIds.size} wine{checkedIds.size!==1?"s":""}
               </button>
             </div>
@@ -231,51 +173,47 @@ const ImportModal = ({ onClose, onImport }) => {
 
 const WineModal = ({ wine, onClose, onSave, onDelete }) => {
   const [editing, setEditing] = useState(!wine.id);
-  const [form, setForm] = useState({...wine});
+  const [form, setForm] = useState({type:"Red",...wine});
   const set = (k,v) => setForm(f=>({...f,[k]:v}));
-  const wc = WINE_COLORS[wine.type||form.type] || WINE_COLORS.Red;
-  const status = wine.id ? drinkingStatus(wine) : null;
+  const wc = WINE_COLORS[form.type] || WINE_COLORS.Red;
+  const inp = {border:"1px solid #eee",borderRadius:8,color:"#1a1a1a",padding:"9px 11px",fontSize:13,width:"100%",outline:"none",background:"#fafafa"};
+  const lbl = {fontSize:10,color:"#bbb",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4,display:"block"};
 
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:150,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:640,maxHeight:"92vh",overflow:"auto",position:"relative"}}>
-        <div style={{width:36,height:4,background:"#e0e0e0",borderRadius:2,margin:"14px auto 0"}}/>
-
+      <div style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:640,maxHeight:"92vh",overflow:"auto"}}>
+        <div style={{width:36,height:4,background:"#e0e0e0",borderRadius:2,margin:"12px auto 0"}}/>
         {!editing && wine.id ? (
           <>
-            <div style={{background:wc.light,padding:"20px 20px 24px",borderRadius:"20px 20px 0 0"}}>
+            <div style={{background:wc.light,padding:"20px 20px 24px"}}>
               <div style={{display:"flex",gap:16,alignItems:"flex-start"}}>
-                <WineLabel wine={wine} size={90}/>
+                <WineLabel wine={wine} size={80}/>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{display:"flex",gap:6,marginBottom:8,flexWrap:"wrap"}}>
-                    <span style={{background:wc.bg,color:"#fff",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:600}}>{wine.type}</span>
-                    {status&&<span style={{background:"#fff",color:status.color,border:`1px solid ${status.color}40`,borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:600}}>{status.label}</span>}
-                  </div>
-                  <h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:20,color:"#1a1a1a",lineHeight:1.2,marginBottom:4}}>{wine.name}</h2>
-                  <div style={{fontSize:13,color:"#666"}}>{wine.producer}</div>
-                  <div style={{fontSize:12,color:"#aaa",marginTop:2}}>{wine.region}, {wine.country} · {wine.vintage}</div>
+                  <span style={{background:wc.bg,color:"#fff",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:600,display:"inline-block",marginBottom:8}}>{wine.type}</span>
+                  <h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:20,lineHeight:1.2,marginBottom:4}}>{wine.name}</h2>
+                  {wine.producer&&<div style={{fontSize:13,color:"#666"}}>{wine.producer}</div>}
+                  <div style={{fontSize:12,color:"#aaa",marginTop:2}}>{[wine.region,wine.country,wine.vintage].filter(Boolean).join(' · ')}</div>
                 </div>
               </div>
             </div>
-
-            <div style={{padding:"20px 20px 40px"}}>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:20}}>
-                {[["Bottles",wine.bottles||0],["Rating",wine.rating?`${wine.rating}/100`:"—"],["Value",wine.currentValue?`$${wine.currentValue.toLocaleString()}`:"—"]].map(([l,v])=>(
-                  <div key={l} style={{background:"#fafafa",borderRadius:12,padding:"12px 10px",textAlign:"center"}}>
-                    <div style={{fontSize:11,color:"#aaa",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.05em"}}>{l}</div>
-                    <div style={{fontSize:16,fontWeight:700,color:"#1a1a1a"}}>{v}</div>
+            <div style={{padding:"20px 20px 48px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:20}}>
+                {[["Bottles",wine.bottles||"—"],["Rating",wine.rating?`${wine.rating}/100`:"—"],["Value",wine.currentValue?`$${Number(wine.currentValue).toLocaleString()}`:"—"]].map(([l,v])=>(
+                  <div key={l} style={{background:"#fafafa",borderRadius:12,padding:"12px 8px",textAlign:"center"}}>
+                    <div style={{fontSize:10,color:"#bbb",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.05em"}}>{l}</div>
+                    <div style={{fontSize:16,fontWeight:700}}>{v}</div>
                   </div>
                 ))}
               </div>
-
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
-                {[["Grape",wine.grape],["Location",wine.location],["Purchase",wine.purchasePrice?`$${wine.purchasePrice}`:"—"],["Drink Window",`${wine.drinkFrom}–${wine.drinkUntil}`]].map(([l,v])=>(
-                  <div key={l}><div style={{fontSize:10,color:"#bbb",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>{l}</div><div style={{fontSize:13,color:"#1a1a1a",fontWeight:500}}>{v||"—"}</div></div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20}}>
+                {[["Grape",wine.grape],["Location",wine.location],["Buy Price",wine.purchasePrice?`$${Number(wine.purchasePrice).toLocaleString()}`:null],["Drink Window",wine.drinkFrom&&wine.drinkUntil?`${wine.drinkFrom}–${wine.drinkUntil}`:null]].filter(([,v])=>v).map(([l,v])=>(
+                  <div key={l}><div style={lbl}>{l}</div><div style={{fontSize:13,fontWeight:500}}>{v}</div></div>
                 ))}
               </div>
-
-              {wine.notes&&<div style={{background:"#fafafa",borderRadius:12,padding:16,marginBottom:20}}><div style={{fontSize:10,color:"#bbb",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>Tasting Notes</div><p style={{fontSize:13,color:"#444",lineHeight:1.7,fontStyle:"italic"}}>"{wine.notes}"</p></div>}
-
+              {wine.notes&&<div style={{background:"#fafafa",borderRadius:12,padding:16,marginBottom:20}}>
+                <div style={lbl}>Tasting Notes</div>
+                <p style={{fontSize:13,color:"#444",lineHeight:1.7,fontStyle:"italic"}}>"{wine.notes}"</p>
+              </div>}
               <div style={{display:"flex",gap:10}}>
                 <button onClick={()=>setEditing(true)} style={{flex:1,background:"#f5f5f5",border:"none",color:"#1a1a1a",borderRadius:12,padding:"13px 0",fontSize:13,fontWeight:600}}>Edit</button>
                 <button onClick={()=>onDelete(wine.id)} style={{flex:1,background:"#fef0f0",border:"none",color:"#e74c3c",borderRadius:12,padding:"13px 0",fontSize:13,fontWeight:600}}>Delete</button>
@@ -283,32 +221,34 @@ const WineModal = ({ wine, onClose, onSave, onDelete }) => {
             </div>
           </>
         ) : (
-          <div style={{padding:"20px 20px 40px"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
-              <h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:22,color:"#1a1a1a"}}>{wine.id?"Edit Wine":"Add Wine"}</h2>
+          <div style={{padding:"20px 20px 48px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:22}}>{wine.id?"Edit Wine":"Add Wine"}</h2>
               <button onClick={onClose} style={{background:"#f5f5f5",border:"none",borderRadius:"50%",width:32,height:32,fontSize:18,color:"#888"}}>×</button>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
               {[["name","Wine Name","text"],["producer","Producer","text"],["region","Region","text"],["country","Country","text"],["vintage","Vintage","number"],["grape","Grape","text"],["bottles","Bottles","number"],["location","Location","text"],["purchasePrice","Buy Price ($)","number"],["currentValue","Value ($)","number"],["drinkFrom","Drink From","number"],["drinkUntil","Drink Until","number"],["rating","Rating (0–100)","number"]].map(([k,l,t])=>(
-                <div key={k} style={{marginBottom:4}}>
-                  <label style={{fontSize:10,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4,display:"block"}}>{l}</label>
-                  <input type={t} value={form[k]||""} onChange={e=>set(k,t==="number"?+e.target.value:e.target.value)} style={{border:"1px solid #eee",borderRadius:8,color:"#1a1a1a",padding:"9px 11px",fontSize:13,width:"100%",outline:"none",background:"#fafafa"}}/>
+                <div key={k}>
+                  <label style={lbl}>{l}</label>
+                  <input type={t} value={form[k]||""} onChange={e=>set(k,t==="number"?(e.target.value?Number(e.target.value):null):e.target.value)} style={inp}/>
                 </div>
               ))}
-              <div style={{marginBottom:4}}>
-                <label style={{fontSize:10,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4,display:"block"}}>Type</label>
-                <select value={form.type||"Red"} onChange={e=>set("type",e.target.value)} style={{border:"1px solid #eee",borderRadius:8,color:"#1a1a1a",padding:"9px 11px",fontSize:13,width:"100%",outline:"none",background:"#fafafa"}}>
-                  {["Red","White","Sparkling","Rosé","Dessert"].map(t=><option key={t}>{t}</option>)}
+              <div>
+                <label style={lbl}>Type</label>
+                <select value={form.type||"Red"} onChange={e=>set("type",e.target.value)} style={inp}>
+                  {["Red","White","Sparkling","Rose","Dessert"].map(t=><option key={t}>{t}</option>)}
                 </select>
               </div>
             </div>
-            <div style={{marginBottom:16,marginTop:4}}>
-              <label style={{fontSize:10,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4,display:"block"}}>Tasting Notes</label>
-              <textarea value={form.notes||""} onChange={e=>set("notes",e.target.value)} rows={3} style={{border:"1px solid #eee",borderRadius:8,color:"#1a1a1a",padding:"9px 11px",fontSize:13,width:"100%",outline:"none",background:"#fafafa",resize:"vertical"}}/>
+            <div style={{marginTop:12,marginBottom:20}}>
+              <label style={lbl}>Tasting Notes</label>
+              <textarea value={form.notes||""} onChange={e=>set("notes",e.target.value)} rows={3} style={{...inp,resize:"vertical"}}/>
             </div>
             <div style={{display:"flex",gap:10}}>
               {wine.id&&<button onClick={()=>setEditing(false)} style={{flex:1,background:"#f5f5f5",border:"none",color:"#888",borderRadius:12,padding:"13px 0",fontSize:13,fontWeight:600}}>Cancel</button>}
-              <button onClick={()=>onSave({...form,id:wine.id||Date.now()})} style={{flex:2,background:"#1a1a1a",border:"none",color:"#fff",borderRadius:12,padding:"13px 0",fontSize:13,fontWeight:600}}>{wine.id?"Save Changes":"Add to Collection"}</button>
+              <button onClick={()=>onSave({...form,id:wine.id||Date.now()})} style={{flex:2,background:"#1a1a1a",border:"none",color:"#fff",borderRadius:12,padding:"13px 0",fontSize:13,fontWeight:600}}>
+                {wine.id?"Save Changes":"Add to Collection"}
+              </button>
             </div>
           </div>
         )}
@@ -318,157 +258,143 @@ const WineModal = ({ wine, onClose, onSave, onDelete }) => {
 };
 
 function App() {
-  const [wines, setWines] = useState(SAMPLE_WINES);
+  const [wines, setWines] = useState(()=>{
+    try{ const s=localStorage.getItem("cav_wines"); if(s){const p=JSON.parse(s);if(p&&p.length>0)return p;} }catch(e){}
+    return [];
+  });
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("All");
   const [sortBy, setSortBy] = useState("name");
   const [selected, setSelected] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const [showApiKey, setShowApiKey] = useState(false);
   const [toast, setToast] = useState(null);
   const [drinkConfirm, setDrinkConfirm] = useState(null);
+
+  useEffect(()=>{ try{ localStorage.setItem("cav_wines", JSON.stringify(wines)); }catch(e){} },[wines]);
 
   const filtered = useMemo(()=>wines.filter(w=>{
     const q=search.toLowerCase();
     return(!q||[w.name,w.producer,w.region,w.grape].some(s=>s?.toLowerCase().includes(q)))&&(filterType==="All"||w.type===filterType);
   }).sort((a,b)=>{
     if(sortBy==="name") return (a.name||"").localeCompare(b.name||"");
-    if(sortBy==="vintage") return b.vintage-a.vintage;
+    if(sortBy==="vintage") return (b.vintage||0)-(a.vintage||0);
     if(sortBy==="rating") return (b.rating||0)-(a.rating||0);
     if(sortBy==="value") return (b.currentValue||0)-(a.currentValue||0);
     return 0;
   }),[wines,search,filterType,sortBy]);
 
   const stats = useMemo(()=>({
-    bottles: wines.reduce((s,w)=>s+(w.bottles||0),0),
-    value: wines.reduce((s,w)=>s+((w.currentValue||0)*(w.bottles||1)),0),
-    wines: wines.length,
+    bottles:wines.reduce((s,w)=>s+(w.bottles||0),0),
+    value:wines.reduce((s,w)=>s+((w.currentValue||0)*(w.bottles||1)),0),
+    wines:wines.length,
   }),[wines]);
 
-  const handleSave=(form)=>{
-    if(form.id&&wines.find(w=>w.id===form.id)) setWines(ws=>ws.map(w=>w.id===form.id?form:w));
-    else setWines(ws=>[...ws,{...form,id:Date.now()}]);
-    setSelected(null); setShowAdd(false);
-  };
-  const handleDelete=(id)=>{setWines(ws=>ws.filter(w=>w.id!==id));setSelected(null);};
-  const handleImport=(newWines)=>{setWines(ws=>[...ws,...newWines]);showToast(`✓ ${newWines.length} wines added`);};
-  const showToast=(msg)=>{setToast(msg);setTimeout(()=>setToast(null),3000);};
+  const showToast = (msg) => { setToast(msg); setTimeout(()=>setToast(null),3000); };
+  const handleSave = (form) => { if(form.id&&wines.find(w=>w.id===form.id))setWines(ws=>ws.map(w=>w.id===form.id?form:w));else setWines(ws=>[...ws,form]); setSelected(null);setShowAdd(false); };
+  const handleDelete = (id) => { setWines(ws=>ws.filter(w=>w.id!==id)); setSelected(null); };
+  const handleImport = (newWines) => { setWines(ws=>[...ws,...newWines]); showToast(`✓ ${newWines.length} wines imported`); };
 
-  const drinkBottle = (wine, e) => {
+  const drinkBottle = (wine,e) => {
     e.stopPropagation();
-    if(wine.bottles<=0){ showToast("No bottles left"); return; }
+    if((wine.bottles||0)<=0){ showToast("No bottles remaining"); return; }
     setDrinkConfirm(wine);
   };
   const confirmDrink = () => {
-    setWines(ws=>ws.map(w=>w.id===drinkConfirm.id?{...w,bottles:Math.max(0,w.bottles-1)}:w));
+    setWines(ws=>ws.map(w=>w.id===drinkConfirm.id?{...w,bottles:Math.max(0,(w.bottles||1)-1)}:w));
     showToast(`🍷 Enjoyed a bottle of ${drinkConfirm.name}`);
     setDrinkConfirm(null);
   };
 
   return (
     <div style={{minHeight:"100vh",background:"#f7f5f2"}}>
+      {toast&&<div style={{position:"fixed",bottom:30,left:"50%",transform:"translateX(-50%)",background:"#1a1a1a",color:"#fff",borderRadius:30,padding:"12px 24px",fontSize:13,fontWeight:500,zIndex:500,whiteSpace:"nowrap",boxShadow:"0 4px 20px rgba(0,0,0,0.2)",pointerEvents:"none"}}>{toast}</div>}
 
-      {/* Toast */}
-      {toast&&<div style={{position:"fixed",bottom:30,left:"50%",transform:"translateX(-50%)",background:"#1a1a1a",color:"#fff",borderRadius:30,padding:"12px 24px",fontSize:13,fontWeight:500,zIndex:500,whiteSpace:"nowrap",boxShadow:"0 4px 20px rgba(0,0,0,0.2)"}}>{toast}</div>}
-
-      {/* Drink Confirm Sheet */}
       {drinkConfirm&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:300,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setDrinkConfirm(null)}>
           <div style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:480,padding:"24px 24px 48px"}} onClick={e=>e.stopPropagation()}>
             <div style={{width:36,height:4,background:"#e0e0e0",borderRadius:2,margin:"0 auto 20px"}}/>
             <div style={{textAlign:"center",marginBottom:24}}>
               <div style={{fontSize:48,marginBottom:12}}>🍷</div>
-              <h3 style={{fontFamily:"'DM Serif Display',serif",fontSize:20,color:"#1a1a1a",marginBottom:6}}>Drinking a bottle?</h3>
-              <p style={{fontSize:13,color:"#888"}}>{drinkConfirm.name} · {drinkConfirm.vintage}</p>
-              <p style={{fontSize:12,color:"#bbb",marginTop:4}}>{drinkConfirm.bottles} bottle{drinkConfirm.bottles!==1?"s":""} remaining → {drinkConfirm.bottles-1}</p>
+              <h3 style={{fontFamily:"'DM Serif Display',serif",fontSize:20,marginBottom:6}}>Drinking a bottle?</h3>
+              <p style={{fontSize:13,color:"#888"}}>{drinkConfirm.name}{drinkConfirm.vintage?` · ${drinkConfirm.vintage}`:""}</p>
+              <p style={{fontSize:12,color:"#bbb",marginTop:4}}>{drinkConfirm.bottles} remaining → {(drinkConfirm.bottles||1)-1}</p>
             </div>
             <div style={{display:"flex",gap:12}}>
               <button onClick={()=>setDrinkConfirm(null)} style={{flex:1,background:"#f5f5f5",border:"none",color:"#888",borderRadius:12,padding:"14px 0",fontSize:14,fontWeight:600}}>Cancel</button>
-              <button onClick={confirmDrink} style={{flex:2,background:"#c0392b",border:"none",color:"#fff",borderRadius:12,padding:"14px 0",fontSize:14,fontWeight:700}}>Confirm — Drink It 🍷</button>
+              <button onClick={confirmDrink} style={{flex:2,background:"#c0392b",border:"none",color:"#fff",borderRadius:12,padding:"14px 0",fontSize:14,fontWeight:700}}>Confirm 🍷</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Header */}
       <div style={{background:"#fff",borderBottom:"1px solid #f0f0f0",padding:"16px 18px 14px",position:"sticky",top:0,zIndex:100}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
           <div>
-            <h1 style={{fontFamily:"'DM Serif Display',serif",fontSize:26,color:"#1a1a1a",lineHeight:1}}>Cave à Vin</h1>
-            <p style={{fontSize:11,color:"#bbb",marginTop:2,letterSpacing:"0.05em"}}>{stats.bottles} bottles · ${stats.value.toLocaleString()} value</p>
+            <h1 style={{fontFamily:"'DM Serif Display',serif",fontSize:26,lineHeight:1}}>Cave à Vin</h1>
+            <p style={{fontSize:11,color:"#bbb",marginTop:2}}>{stats.wines} wines · {stats.bottles} bottles{stats.value>0?` · $${stats.value.toLocaleString()} value`:""}</p>
           </div>
           <div style={{display:"flex",gap:8}}>
-            <button onClick={()=>setShowApiKey(true)} style={{background:"#f5f5f5",border:"none",borderRadius:10,padding:"8px 10px",fontSize:16,color:"#888"}}>⚙️</button>
-            <button onClick={()=>setShowImport(true)} style={{background:"#f5f5f5",border:"none",borderRadius:10,padding:"8px 12px",fontSize:12,fontWeight:600,color:"#1a1a1a"}}>Import</button>
+            <button onClick={()=>setShowImport(true)} style={{background:"#f5f5f5",border:"none",borderRadius:10,padding:"8px 14px",fontSize:12,fontWeight:600,color:"#1a1a1a"}}>Import</button>
             <button onClick={()=>setShowAdd(true)} style={{background:"#1a1a1a",border:"none",borderRadius:10,padding:"8px 16px",fontSize:12,fontWeight:600,color:"#fff"}}>+ Add</button>
           </div>
         </div>
-
-        {/* Search */}
         <div style={{position:"relative",marginBottom:12}}>
           <svg style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)"}} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search wines, regions, grapes…" style={{background:"#f7f5f2",border:"none",borderRadius:10,color:"#1a1a1a",padding:"10px 12px 10px 34px",fontSize:13,width:"100%",outline:"none"}}/>
         </div>
-
-        {/* Type filters */}
         <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:2}}>
-          {TYPES.map(t=>{
-            const wc=WINE_COLORS[t];
-            const active=filterType===t;
-            return(
-              <button key={t} onClick={()=>setFilterType(t)} style={{background:active?(wc?wc.bg:"#1a1a1a"):"#f5f5f5",color:active?"#fff":"#666",border:"none",borderRadius:20,padding:"6px 14px",fontSize:12,fontWeight:active?600:400,whiteSpace:"nowrap",flexShrink:0}}>{t}</button>
-            );
-          })}
+          {TYPES.map(t=>{const wc=WINE_COLORS[t];const active=filterType===t;return(<button key={t} onClick={()=>setFilterType(t)} style={{background:active?(wc?wc.bg:"#1a1a1a"):"#f5f5f5",color:active?"#fff":"#666",border:"none",borderRadius:20,padding:"6px 14px",fontSize:12,fontWeight:active?600:400,whiteSpace:"nowrap",flexShrink:0}}>{t}</button>);})}
         </div>
       </div>
 
-      {/* Sort bar */}
       <div style={{display:"flex",gap:6,padding:"10px 18px",alignItems:"center",overflowX:"auto"}}>
         <span style={{fontSize:11,color:"#bbb",flexShrink:0}}>Sort:</span>
         {[["name","Name"],["vintage","Vintage"],["rating","Rating"],["value","Value"]].map(([v,l])=>(
           <button key={v} onClick={()=>setSortBy(v)} style={{background:sortBy===v?"#1a1a1a":"transparent",color:sortBy===v?"#fff":"#888",border:sortBy===v?"none":"1px solid #e8e8e8",borderRadius:20,padding:"4px 12px",fontSize:11,fontWeight:sortBy===v?600:400,flexShrink:0}}>{l}</button>
         ))}
-        <span style={{marginLeft:"auto",fontSize:11,color:"#bbb",flexShrink:0}}>{filtered.length} wines</span>
+        <span style={{marginLeft:"auto",fontSize:11,color:"#bbb",flexShrink:0}}>{filtered.length} wine{filtered.length!==1?"s":""}</span>
       </div>
 
-      {/* Wine List */}
       <div style={{padding:"4px 18px 100px"}}>
-        {filtered.length===0 ? (
-          <div style={{textAlign:"center",padding:"60px 0",color:"#ccc"}}>
-            <div style={{fontSize:48,marginBottom:12}}>🍷</div>
-            <div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:"#aaa",marginBottom:6}}>No wines found</div>
-            <div style={{fontSize:13}}>Try a different search or filter</div>
+        {wines.length===0 ? (
+          <div style={{textAlign:"center",padding:"80px 20px"}}>
+            <div style={{fontSize:56,marginBottom:16}}>🍷</div>
+            <h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:24,marginBottom:8}}>Your cellar is empty</h2>
+            <p style={{fontSize:14,color:"#aaa",marginBottom:28,lineHeight:1.6}}>Import your collection from Excel or add wines one by one.</p>
+            <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+              <button onClick={()=>setShowImport(true)} style={{background:"#f5f5f5",border:"none",borderRadius:12,padding:"12px 20px",fontSize:13,fontWeight:600}}>Import Excel</button>
+              <button onClick={()=>setShowAdd(true)} style={{background:"#1a1a1a",border:"none",borderRadius:12,padding:"12px 20px",fontSize:13,fontWeight:600,color:"#fff"}}>+ Add Wine</button>
+            </div>
+          </div>
+        ) : filtered.length===0 ? (
+          <div style={{textAlign:"center",padding:"60px 0"}}>
+            <div style={{fontSize:36,marginBottom:10}}>🔍</div>
+            <div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:"#aaa"}}>No wines match</div>
           </div>
         ) : (
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {filtered.map(wine=>{
-              const status=drinkingStatus(wine);
               const wc=WINE_COLORS[wine.type]||WINE_COLORS.Red;
               return(
-                <div key={wine.id} onClick={()=>setSelected(wine)} style={{background:"#fff",borderRadius:16,padding:"14px 16px",display:"flex",gap:14,alignItems:"center",boxShadow:"0 1px 4px rgba(0,0,0,0.05)",cursor:"pointer",position:"relative"}}>
+                <div key={wine.id} onClick={()=>setSelected(wine)} style={{background:"#fff",borderRadius:16,padding:"14px 16px",display:"flex",gap:14,alignItems:"center",boxShadow:"0 1px 4px rgba(0,0,0,0.05)",cursor:"pointer"}}>
                   <WineLabel wine={wine} size={60}/>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-                      <span style={{fontSize:10,color:status.color,fontWeight:600}}>{status.label}</span>
+                    <h3 style={{fontFamily:"'DM Serif Display',serif",fontSize:15,marginBottom:2,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{wine.name}</h3>
+                    {wine.producer&&<div style={{fontSize:12,color:"#aaa",marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{wine.producer}</div>}
+                    <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                      {wine.vintage&&<span style={{fontSize:11,color:"#888"}}>{wine.vintage}</span>}
+                      {wine.region&&<span style={{fontSize:11,color:"#bbb"}}>· {wine.region}</span>}
+                      {wine.rating>0&&<span style={{fontSize:11,color:"#888"}}>· ⭐{wine.rating}</span>}
+                      {wine.currentValue>0&&<span style={{fontSize:11,color:"#27ae60",fontWeight:600}}>· ${Number(wine.currentValue).toLocaleString()}</span>}
                     </div>
-                    <h3 style={{fontFamily:"'DM Serif Display',serif",fontSize:15,color:"#1a1a1a",marginBottom:2,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{wine.name}</h3>
-                    <div style={{fontSize:12,color:"#aaa",marginBottom:6,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{wine.producer} · {wine.region}</div>
-                    <div style={{display:"flex",alignItems:"center",gap:10}}>
-                      <span style={{fontSize:11,color:"#888"}}>🍾 {wine.bottles} left</span>
-                      <span style={{fontSize:11,color:"#888"}}>{wine.vintage}</span>
-                      {wine.rating>0&&<span style={{fontSize:11,color:"#888"}}>⭐ {wine.rating}</span>}
-                      {wine.currentValue>0&&<span style={{fontSize:11,color:"#27ae60",fontWeight:600}}>${wine.currentValue.toLocaleString()}</span>}
+                    <div style={{marginTop:5}}>
+                      <span style={{fontSize:11,color:"#888"}}>🍾 {wine.bottles||0} bottle{(wine.bottles||0)!==1?"s":""} remaining</span>
                     </div>
                   </div>
-                  {/* Drink button */}
-                  <button
-                    onClick={(e)=>drinkBottle(wine,e)}
-                    style={{background:wine.bottles>0?"#fef0f0":"#f5f5f5",border:"none",borderRadius:12,padding:"10px 12px",flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",gap:2}}
-                    title="Drink a bottle"
-                  >
+                  <button onClick={(e)=>drinkBottle(wine,e)} style={{background:"#fef5f5",border:"none",borderRadius:12,padding:"10px 10px",flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",gap:2,minWidth:48}}>
                     <span style={{fontSize:20}}>🍷</span>
-                    <span style={{fontSize:9,color:wine.bottles>0?"#e74c3c":"#ccc",fontWeight:600}}>Drink</span>
+                    <span style={{fontSize:9,color:"#c0392b",fontWeight:600}}>Drink</span>
                   </button>
                 </div>
               );
@@ -477,25 +403,14 @@ function App() {
         )}
       </div>
 
-      {/* Modals */}
       {selected&&<WineModal wine={selected} onClose={()=>setSelected(null)} onSave={handleSave} onDelete={handleDelete}/>}
-      {showAdd&&<WineModal wine={{type:"Red"}} onClose={()=>setShowAdd(false)} onSave={handleSave} onDelete={()=>{}}/>}
+      {showAdd&&<WineModal wine={{}} onClose={()=>setShowAdd(false)} onSave={handleSave} onDelete={()=>{}}/>}
       {showImport&&<ImportModal onClose={()=>setShowImport(false)} onImport={handleImport}/>}
-      {showApiKey&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setShowApiKey(false)}>
-          <div style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:480,padding:"24px 24px 48px"}} onClick={e=>e.stopPropagation()}>
-            <div style={{width:36,height:4,background:"#e0e0e0",borderRadius:2,margin:"0 auto 20px"}}/>
-            <h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:22,color:"#1a1a1a",marginBottom:20}}>⚙️ Settings</h2>
-            <ApiKeyPrompt onSaved={()=>{setShowApiKey(false);showToast("API key saved");}}/>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<App/>);
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 </body>
 </html>
