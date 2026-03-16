@@ -342,16 +342,16 @@
     "notes": ""
   },
   {
+    "type": "Red",
     "id": 1773631250803,
     "name": "Sherbrooke Cellars Bookster Merlot",
     "producer": "",
     "region": "",
     "country": "",
     "vintage": 2005,
-    "type": "Red",
     "grape": "",
     "bottles": 1,
-    "location": "",
+    "location": "S084552",
     "purchasePrice": null,
     "currentValue": null,
     "drinkFrom": null,
