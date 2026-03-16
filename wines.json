@@ -216,16 +216,16 @@
     "notes": ""
   },
   {
+    "type": "Red",
     "id": 1773631250796,
     "name": "Quilceda Creek Cabernet Sauvignon Coloumbia Valley",
     "producer": "",
     "region": "",
     "country": "",
     "vintage": 2014,
-    "type": "Red",
     "grape": "",
     "bottles": 1,
-    "location": "",
+    "location": "S079282",
     "purchasePrice": null,
     "currentValue": null,
     "drinkFrom": null,
