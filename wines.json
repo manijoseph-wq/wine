@@ -198,16 +198,16 @@
     "notes": ""
   },
   {
+    "type": "Red",
     "id": 1773631250795,
     "name": "Paul Hobbs Nathan Coombs Estate Cabernet Sauvignon",
     "producer": "",
     "region": "",
     "country": "",
     "vintage": 2014,
-    "type": "Red",
     "grape": "",
     "bottles": 1,
-    "location": "",
+    "location": "S079282",
     "purchasePrice": null,
     "currentValue": null,
     "drinkFrom": null,
