@@ -234,16 +234,16 @@
     "notes": ""
   },
   {
+    "type": "Red",
     "id": 1773631250797,
     "name": "Spottswoode Family Estate Grown Cabernet Sauvignon",
     "producer": "",
     "region": "",
     "country": "",
     "vintage": 2016,
-    "type": "Red",
     "grape": "",
     "bottles": 1,
-    "location": "",
+    "location": "S079282",
     "purchasePrice": null,
     "currentValue": null,
     "drinkFrom": null,
