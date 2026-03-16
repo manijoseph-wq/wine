@@ -324,16 +324,16 @@
     "notes": ""
   },
   {
+    "type": "Red",
     "id": 1773631250802,
     "name": "Paul Hobbs Beckstoffer Las Piedras Vineyard Cabernet Sauvignon",
     "producer": "",
     "region": "",
     "country": "",
     "vintage": 2013,
-    "type": "Red",
     "grape": "",
     "bottles": 3,
-    "location": "",
+    "location": "S084552",
     "purchasePrice": null,
     "currentValue": null,
     "drinkFrom": null,
