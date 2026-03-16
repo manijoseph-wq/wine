@@ -255,11 +255,66 @@ const WineModal = ({ wine, onClose, onSave, onDelete }) => {
 };
 
 function App() {
-  const [wines, setWines] = useState(()=>{
-    try{ const s=localStorage.getItem("cav_wines"); if(s){const p=JSON.parse(s);if(p&&p.length>0)return p;} }catch(e){}
-    return [];
-  });
+  const [wines, setWines] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [search, setSearch] = useState("");
+
+  const GITHUB_TOKEN = "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";
+  const GITHUB_REPO = "manijoseph-wq/wine";
+  const GITHUB_FILE = "wines.json";
+  const GITHUB_API = `https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`;
+
+  const loadWines = async () => {
+    try {
+      const res = await fetch(GITHUB_API, {
+        headers: { "Authorization": `token ${GITHUB_TOKEN}`, "Accept": "application/vnd.github.v3+json" }
+      });
+      if(res.ok) {
+        const data = await res.json();
+        const wines = JSON.parse(atob(data.content.replace(/\n/g,"")));
+        setWines(wines);
+        localStorage.setItem("cav_wines", JSON.stringify(wines));
+        localStorage.setItem("cav_sha", data.sha);
+      } else if(res.status === 404) {
+        // File doesn't exist yet, start empty
+        const cached = localStorage.getItem("cav_wines");
+        if(cached) setWines(JSON.parse(cached));
+      }
+    } catch(e) {
+      // Offline — use local cache
+      const cached = localStorage.getItem("cav_wines");
+      if(cached) setWines(JSON.parse(cached));
+    }
+    setLoading(false);
+  };
+
+  const saveWines = async (newWines) => {
+    setSyncing(true);
+    try {
+      localStorage.setItem("cav_wines", JSON.stringify(newWines));
+      const sha = localStorage.getItem("cav_sha");
+      const body = {
+        message: "Update wines",
+        content: btoa(unescape(encodeURIComponent(JSON.stringify(newWines, null, 2)))),
+        ...(sha ? {sha} : {})
+      };
+      const res = await fetch(GITHUB_API, {
+        method: "PUT",
+        headers: { "Authorization": `token ${GITHUB_TOKEN}`, "Accept": "application/vnd.github.v3+json", "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      if(res.ok) {
+        const data = await res.json();
+        localStorage.setItem("cav_sha", data.content.sha);
+      }
+    } catch(e) {
+      console.error("Save failed:", e);
+    }
+    setSyncing(false);
+  };
+
+  useEffect(()=>{ loadWines(); },[]);
   const [filterType, setFilterType] = useState("All");
   const [sortBy, setSortBy] = useState("name");
   const [selected, setSelected] = useState(null);
@@ -268,7 +323,7 @@ function App() {
   const [toast, setToast] = useState(null);
   const [drinkConfirm, setDrinkConfirm] = useState(null);
 
-  useEffect(()=>{ try{ localStorage.setItem("cav_wines", JSON.stringify(wines)); }catch(e){} },[wines]);
+  // wines are saved via saveWines()
 
   const filtered = useMemo(()=>wines.filter(w=>{
     const q=search.toLowerCase();
@@ -288,9 +343,18 @@ function App() {
   }),[wines]);
 
   const showToast = (msg) => { setToast(msg); setTimeout(()=>setToast(null),3000); };
-  const handleSave = (form) => { if(form.id&&wines.find(w=>w.id===form.id))setWines(ws=>ws.map(w=>w.id===form.id?form:w));else setWines(ws=>[...ws,form]); setSelected(null);setShowAdd(false); };
-  const handleDelete = (id) => { setWines(ws=>ws.filter(w=>w.id!==id)); setSelected(null); };
-  const handleImport = (newWines) => { setWines(ws=>[...ws,...newWines]); showToast(`✓ ${newWines.length} wines imported`); };
+  const handleSave = (form) => {
+    const newWines = form.id&&wines.find(w=>w.id===form.id) ? wines.map(w=>w.id===form.id?form:w) : [...wines,form];
+    setWines(newWines); saveWines(newWines); setSelected(null); setShowAdd(false);
+  };
+  const handleDelete = (id) => {
+    const newWines = wines.filter(w=>w.id!==id);
+    setWines(newWines); saveWines(newWines); setSelected(null);
+  };
+  const handleImport = (newWines) => {
+    const updated = [...wines, ...newWines];
+    setWines(updated); saveWines(updated); showToast(`✓ ${newWines.length} wines imported`);
+  };
 
   const drinkBottle = (wine,e) => {
     e.stopPropagation();
@@ -298,7 +362,8 @@ function App() {
     setDrinkConfirm(wine);
   };
   const confirmDrink = () => {
-    setWines(ws=>ws.map(w=>w.id===drinkConfirm.id?{...w,bottles:Math.max(0,(w.bottles||1)-1)}:w));
+    const newWines = wines.map(w=>w.id===drinkConfirm.id?{...w,bottles:Math.max(0,(w.bottles||1)-1)}:w);
+    setWines(newWines); saveWines(newWines);
     showToast(`🍷 Enjoyed a bottle of ${drinkConfirm.name}`);
     setDrinkConfirm(null);
   };
@@ -325,11 +390,12 @@ function App() {
         </div>
       )}
 
+      {loading&&<div style={{position:"fixed",inset:0,background:"#f7f5f2",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12}}><div style={{fontSize:48}}>🍷</div><div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:"#1a1a1a"}}>Loading your cellar…</div></div>}
       <div style={{background:"#fff",borderBottom:"1px solid #f0f0f0",padding:"16px 18px 14px",position:"sticky",top:0,zIndex:100}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
           <div>
             <h1 style={{fontFamily:"'DM Serif Display',serif",fontSize:26,lineHeight:1}}>Cave à Vin</h1>
-            <p style={{fontSize:11,color:"#bbb",marginTop:2}}>{stats.wines} wines · {stats.bottles} bottles{stats.value>0?` · $${stats.value.toLocaleString()} value`:""}</p>
+            <p style={{fontSize:11,color:"#bbb",marginTop:2}}>{stats.wines} wines · {stats.bottles} bottles{stats.value>0?` · $${stats.value.toLocaleString()} value`:""}{syncing?" · saving…":""}</p>
           </div>
           <div style={{display:"flex",gap:8}}>
             <button onClick={()=>setShowImport(true)} style={{background:"#f5f5f5",border:"none",borderRadius:10,padding:"8px 14px",fontSize:12,fontWeight:600,color:"#1a1a1a"}}>Import</button>
