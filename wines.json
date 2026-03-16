@@ -1,15 +1,15 @@
 [
   {
+    "type": "Red",
     "id": 1773631250783,
     "name": "Chateau Clinet",
     "producer": "",
     "region": "",
     "country": "",
     "vintage": 2015,
-    "type": "Red",
     "grape": "",
-    "bottles": 6,
-    "location": "S071736",
+    "bottles": 12,
+    "location": "S071736 CWC",
     "purchasePrice": null,
     "currentValue": null,
     "drinkFrom": null,
