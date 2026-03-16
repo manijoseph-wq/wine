@@ -260,15 +260,15 @@ function App() {
   const [syncing, setSyncing] = useState(false);
   const [search, setSearch] = useState("");
 
-  const GITHUB_TOKEN = "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";
   const GITHUB_REPO = "manijoseph-wq/wine";
   const GITHUB_FILE = "wines.json";
   const GITHUB_API = `https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`;
+  const getToken = () => localStorage.getItem("cav_gh_token")||"";
 
   const loadWines = async () => {
     try {
       const res = await fetch(GITHUB_API, {
-        headers: { "Authorization": `token ${GITHUB_TOKEN}`, "Accept": "application/vnd.github.v3+json" }
+        headers: { "Authorization": `token ${getToken()}`, "Accept": "application/vnd.github.v3+json" }
       });
       if(res.ok) {
         const data = await res.json();
@@ -301,7 +301,7 @@ function App() {
       };
       const res = await fetch(GITHUB_API, {
         method: "PUT",
-        headers: { "Authorization": `token ${GITHUB_TOKEN}`, "Accept": "application/vnd.github.v3+json", "Content-Type": "application/json" },
+        headers: { "Authorization": `token ${getToken()}`, "Accept": "application/vnd.github.v3+json", "Content-Type": "application/json" },
         body: JSON.stringify(body)
       });
       if(res.ok) {
@@ -322,6 +322,7 @@ function App() {
   const [showImport, setShowImport] = useState(false);
   const [toast, setToast] = useState(null);
   const [drinkConfirm, setDrinkConfirm] = useState(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   // wines are saved via saveWines()
 
@@ -390,7 +391,7 @@ function App() {
         </div>
       )}
 
-      {loading&&<div style={{position:"fixed",inset:0,background:"#f7f5f2",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12}}><div style={{fontSize:48}}>🍷</div><div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:"#1a1a1a"}}>Loading your cellar…</div></div>}
+      {loading&&<div style={{position:"fixed",inset:0,background:"#f7f5f2",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12}}><div style={{fontSize:48}}>🍷</div><div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:"#1a1a1a"}}>{getToken()?"Loading your cellar…":"Setting up…"}</div></div>}
       <div style={{background:"#fff",borderBottom:"1px solid #f0f0f0",padding:"16px 18px 14px",position:"sticky",top:0,zIndex:100}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
           <div>
@@ -398,6 +399,7 @@ function App() {
             <p style={{fontSize:11,color:"#bbb",marginTop:2}}>{stats.wines} wines · {stats.bottles} bottles{stats.value>0?` · $${stats.value.toLocaleString()} value`:""}{syncing?" · saving…":""}</p>
           </div>
           <div style={{display:"flex",gap:8}}>
+            <button onClick={()=>setShowSettings(true)} style={{background:"#f5f5f5",border:"none",borderRadius:10,padding:"8px 10px",fontSize:16,color:"#888"}}>⚙️</button>
             <button onClick={()=>setShowImport(true)} style={{background:"#f5f5f5",border:"none",borderRadius:10,padding:"8px 14px",fontSize:12,fontWeight:600,color:"#1a1a1a"}}>Import</button>
             <button onClick={()=>setShowAdd(true)} style={{background:"#1a1a1a",border:"none",borderRadius:10,padding:"8px 16px",fontSize:12,fontWeight:600,color:"#fff"}}>+ Add</button>
           </div>
@@ -466,6 +468,23 @@ function App() {
         )}
       </div>
 
+      {showSettings&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setShowSettings(false)}>
+          <div style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:480,padding:"24px 24px 48px"}} onClick={e=>e.stopPropagation()}>
+            <div style={{width:36,height:4,background:"#e0e0e0",borderRadius:2,margin:"0 auto 20px"}}/>
+            <h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:22,marginBottom:20}}>⚙️ Settings</h2>
+            <div style={{marginBottom:8,fontSize:10,color:"#bbb",textTransform:"uppercase",letterSpacing:"0.08em"}}>GitHub Token</div>
+            <input
+              defaultValue={localStorage.getItem("cav_gh_token")||""}
+              onChange={e=>localStorage.setItem("cav_gh_token",e.target.value.trim())}
+              placeholder="ghp_..."
+              style={{border:"1px solid #eee",borderRadius:8,color:"#1a1a1a",padding:"10px 12px",fontSize:12,width:"100%",outline:"none",background:"#fafafa",marginBottom:8}}
+            />
+            <div style={{fontSize:11,color:"#bbb",marginBottom:20,lineHeight:1.6}}>Your token is stored on your device only — never in the code.</div>
+            <button onClick={()=>{setShowSettings(false);loadWines();showToast("Settings saved");}} style={{width:"100%",background:"#1a1a1a",border:"none",color:"#fff",borderRadius:12,padding:"13px 0",fontSize:13,fontWeight:600}}>Save & Sync</button>
+          </div>
+        </div>
+      )}
       {selected&&<WineModal wine={selected} onClose={()=>setSelected(null)} onSave={handleSave} onDelete={handleDelete}/>}
       {showAdd&&<WineModal wine={{}} onClose={()=>setShowAdd(false)} onSave={handleSave} onDelete={()=>{}}/>}
       {showImport&&<ImportModal onClose={()=>setShowImport(false)} onImport={handleImport}/>}
