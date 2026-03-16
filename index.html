@@ -293,7 +293,14 @@ function App() {
     setSyncing(true);
     try {
       localStorage.setItem("cav_wines", JSON.stringify(newWines));
-      const sha = localStorage.getItem("cav_sha");
+      const token = getToken();
+      if(!token) { showToast("⚠️ No GitHub token — tap ⚙️ to set up sync"); setSyncing(false); return; }
+      // Get current SHA first
+      const getRes = await fetch(GITHUB_API, {
+        headers: { "Authorization": `token ${token}`, "Accept": "application/vnd.github.v3+json" }
+      });
+      let sha = null;
+      if(getRes.ok) { const d = await getRes.json(); sha = d.sha; localStorage.setItem("cav_sha", sha); }
       const body = {
         message: "Update wines",
         content: btoa(unescape(encodeURIComponent(JSON.stringify(newWines, null, 2)))),
@@ -301,15 +308,19 @@ function App() {
       };
       const res = await fetch(GITHUB_API, {
         method: "PUT",
-        headers: { "Authorization": `token ${getToken()}`, "Accept": "application/vnd.github.v3+json", "Content-Type": "application/json" },
+        headers: { "Authorization": `token ${token}`, "Accept": "application/vnd.github.v3+json", "Content-Type": "application/json" },
         body: JSON.stringify(body)
       });
       if(res.ok) {
         const data = await res.json();
         localStorage.setItem("cav_sha", data.content.sha);
+        showToast("✅ Synced to GitHub");
+      } else {
+        const err = await res.json();
+        showToast("⚠️ Sync failed: " + (err.message||res.status));
       }
     } catch(e) {
-      console.error("Save failed:", e);
+      showToast("⚠️ Sync error: " + e.message);
     }
     setSyncing(false);
   };
