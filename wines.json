@@ -720,16 +720,16 @@
     "notes": ""
   },
   {
+    "type": "Red",
     "id": 1773631250824,
     "name": "Marchesi Antinori Tignanello Toscana IGT",
     "producer": "",
     "region": "",
     "country": "",
     "vintage": 2016,
-    "type": "Red",
     "grape": "",
     "bottles": 2,
-    "location": "",
+    "location": "S103348",
     "purchasePrice": null,
     "currentValue": null,
     "drinkFrom": null,
