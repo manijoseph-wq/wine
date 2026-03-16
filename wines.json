@@ -702,16 +702,16 @@
     "notes": ""
   },
   {
+    "type": "Red",
     "id": 1773631250823,
     "name": "Chateau Pape Clement",
     "producer": "",
     "region": "",
     "country": "",
     "vintage": 2000,
-    "type": "Red",
     "grape": "",
     "bottles": 1,
-    "location": "",
+    "location": "S088091",
     "purchasePrice": null,
     "currentValue": null,
     "drinkFrom": null,
