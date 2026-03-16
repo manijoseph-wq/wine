@@ -378,16 +378,16 @@
     "notes": ""
   },
   {
+    "type": "Red",
     "id": 1773631250805,
     "name": "Vieux Chateau Certan",
     "producer": "",
     "region": "",
     "country": "",
     "vintage": 2008,
-    "type": "Red",
     "grape": "",
     "bottles": 4,
-    "location": "",
+    "location": "S084555",
     "purchasePrice": null,
     "currentValue": null,
     "drinkFrom": null,
