@@ -38,15 +38,13 @@ const TYPES = ["All","Red","White","Sparkling","Rose","Dessert"];
 
 const WineLabel = ({ wine, size=60 }) => {
   const wc = WINE_COLORS[wine.type] || WINE_COLORS.Red;
-  const initials = (wine.name||"?").split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
   return (
     <div style={{width:size,height:size*1.35,borderRadius:6,overflow:'hidden',flexShrink:0,boxShadow:'0 2px 10px rgba(0,0,0,0.1)',position:'relative',background:'#fff'}}>
       <div style={{position:'absolute',inset:0,background:`linear-gradient(160deg,${wc.bg}18,${wc.bg}38)`}}/>
       <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:4}}>
-        <div style={{width:size*0.5,height:size*0.5,borderRadius:'50%',background:`linear-gradient(135deg,${wc.bg},${wc.bg}bb)`,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:3}}>
-          <span style={{color:'#fff',fontSize:size*0.18,fontWeight:700,fontFamily:"'DM Serif Display',serif"}}>{initials}</span>
+        <div style={{width:size*0.72,height:size*0.72,borderRadius:'50%',background:`linear-gradient(135deg,${wc.bg},${wc.bg}bb)`,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:2}}>
+          <span style={{color:'#fff',fontSize:size*0.22,fontWeight:700,fontFamily:"'DM Serif Display',serif",letterSpacing:'-0.02em'}}>{wine.vintage||'—'}</span>
         </div>
-        <div style={{fontSize:size*0.1,color:wc.bg,fontWeight:600}}>{wine.vintage||''}</div>
       </div>
       <div style={{position:'absolute',bottom:0,left:0,right:0,background:wc.bg,height:size*0.18,display:'flex',alignItems:'center',justifyContent:'center'}}>
         <span style={{color:'#fff',fontSize:size*0.08,fontWeight:600,letterSpacing:'0.06em',textTransform:'uppercase'}}>{wine.type||''}</span>
@@ -195,7 +193,7 @@ const WineModal = ({ wine, onClose, onSave, onDelete }) => {
             </div>
             <div style={{padding:"20px 20px 48px"}}>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:20}}>
-                {[["Bottles",wine.bottles||"—"],["Rating",wine.rating?`${wine.rating}/100`:"—"],["Value",wine.currentValue?`$${Number(wine.currentValue).toLocaleString()}`:"—"]].map(([l,v])=>(
+                {[["Bottles",wine.bottles||"—"],["Location",wine.location||"—"],["Vintage",wine.vintage||"—"]].map(([l,v])=>(
                   <div key={l} style={{background:"#fafafa",borderRadius:12,padding:"12px 8px",textAlign:"center"}}>
                     <div style={{fontSize:10,color:"#bbb",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.05em"}}>{l}</div>
                     <div style={{fontSize:16,fontWeight:700}}>{v}</div>
@@ -211,6 +209,14 @@ const WineModal = ({ wine, onClose, onSave, onDelete }) => {
                 <div style={lbl}>Tasting Notes</div>
                 <p style={{fontSize:13,color:"#444",lineHeight:1.7,fontStyle:"italic"}}>"{wine.notes}"</p>
               </div>}
+              <div style={{display:"flex",gap:10,marginBottom:10}}>
+                <a href={`https://www.wine-searcher.com/find/${encodeURIComponent((wine.name||"")+(wine.vintage?` ${wine.vintage}`:""))}`} target="_blank" rel="noopener noreferrer" style={{flex:1,background:"#f0f7ff",color:"#2980b9",borderRadius:12,padding:"13px 0",fontSize:13,fontWeight:600,textAlign:"center",textDecoration:"none",display:"block"}}>
+                  🔍 Wine Searcher
+                </a>
+                <a href={`https://www.cellartracker.com/list.asp?fInStock=0&Table=List&szSearch=${encodeURIComponent((wine.name||"")+(wine.vintage?` ${wine.vintage}`:""))}`} target="_blank" rel="noopener noreferrer" style={{flex:1,background:"#f5f0ff",color:"#8e44ad",borderRadius:12,padding:"13px 0",fontSize:13,fontWeight:600,textAlign:"center",textDecoration:"none",display:"block"}}>
+                  📓 CellarTracker
+                </a>
+              </div>
               <div style={{display:"flex",gap:10}}>
                 <button onClick={()=>setEditing(true)} style={{flex:1,background:"#f5f5f5",border:"none",color:"#1a1a1a",borderRadius:12,padding:"13px 0",fontSize:13,fontWeight:600}}>Edit</button>
                 <button onClick={()=>onDelete(wine.id)} style={{flex:1,background:"#fef0f0",border:"none",color:"#e74c3c",borderRadius:12,padding:"13px 0",fontSize:13,fontWeight:600}}>Delete</button>
@@ -256,6 +262,19 @@ const WineModal = ({ wine, onClose, onSave, onDelete }) => {
 
 function App() {
   const [wines, setWines] = useState([]);
+  const [activity, setActivity] = useState(()=>{
+    try{ const s=localStorage.getItem("cav_activity"); return s?JSON.parse(s):[]; }catch(e){ return []; }
+  });
+  const [showActivity, setShowActivity] = useState(false);
+
+  const logActivity = (type, wine, detail="") => {
+    const entry = { id:Date.now(), type, wineName:wine.name, vintage:wine.vintage, detail, date:new Date().toLocaleDateString() };
+    setActivity(prev => {
+      const updated = [entry, ...prev].slice(0,100);
+      try{ localStorage.setItem("cav_activity", JSON.stringify(updated)); }catch(e){}
+      return updated;
+    });
+  };
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [search, setSearch] = useState("");
@@ -356,16 +375,25 @@ function App() {
 
   const showToast = (msg) => { setToast(msg); setTimeout(()=>setToast(null),3000); };
   const handleSave = (form) => {
-    const newWines = form.id&&wines.find(w=>w.id===form.id) ? wines.map(w=>w.id===form.id?form:w) : [...wines,form];
-    setWines(newWines); saveWines(newWines); setSelected(null); setShowAdd(false);
+    const isNew = !wines.find(w=>w.id===form.id);
+    const newWines = !isNew ? wines.map(w=>w.id===form.id?form:w) : [...wines,form];
+    setWines(newWines); saveWines(newWines);
+    if(isNew) logActivity("added", form, `${form.bottles||1} bottle${(form.bottles||1)!==1?"s":""} added`);
+    else logActivity("edited", form, "Details updated");
+    setSelected(null); setShowAdd(false);
   };
   const handleDelete = (id) => {
+    const wine = wines.find(w=>w.id===id);
     const newWines = wines.filter(w=>w.id!==id);
-    setWines(newWines); saveWines(newWines); setSelected(null);
+    setWines(newWines); saveWines(newWines);
+    if(wine) logActivity("deleted", wine, "Removed from cellar");
+    setSelected(null);
   };
   const handleImport = (newWines) => {
     const updated = [...wines, ...newWines];
-    setWines(updated); saveWines(updated); showToast(`✓ ${newWines.length} wines imported`);
+    setWines(updated); saveWines(updated);
+    newWines.forEach(w => logActivity("added", w, `${w.bottles} bottle${w.bottles!==1?"s":""} added`));
+    showToast(`✓ ${newWines.length} wines imported`);
   };
 
   const drinkBottle = (wine,e) => {
@@ -376,6 +404,7 @@ function App() {
   const confirmDrink = () => {
     const newWines = wines.map(w=>w.id===drinkConfirm.id?{...w,bottles:Math.max(0,(w.bottles||1)-1)}:w);
     setWines(newWines); saveWines(newWines);
+    logActivity("drank", drinkConfirm, `1 bottle enjoyed · ${(drinkConfirm.bottles||1)-1} remaining`);
     showToast(`🍷 Enjoyed a bottle of ${drinkConfirm.name}`);
     setDrinkConfirm(null);
   };
@@ -411,6 +440,7 @@ function App() {
           </div>
           <div style={{display:"flex",gap:8}}>
             <button onClick={()=>setShowSettings(true)} style={{background:"#f5f5f5",border:"none",borderRadius:10,padding:"8px 10px",fontSize:16,color:"#888"}}>⚙️</button>
+            <button onClick={()=>setShowActivity(true)} style={{background:"#f5f5f5",border:"none",borderRadius:10,padding:"8px 10px",fontSize:16}}>📋</button>
             <button onClick={()=>setShowImport(true)} style={{background:"#f5f5f5",border:"none",borderRadius:10,padding:"8px 14px",fontSize:12,fontWeight:600,color:"#1a1a1a"}}>Import</button>
             <button onClick={()=>setShowAdd(true)} style={{background:"#1a1a1a",border:"none",borderRadius:10,padding:"8px 16px",fontSize:12,fontWeight:600,color:"#fff"}}>+ Add</button>
           </div>
@@ -493,6 +523,40 @@ function App() {
             />
             <div style={{fontSize:11,color:"#bbb",marginBottom:20,lineHeight:1.6}}>Your token is stored on your device only — never in the code.</div>
             <button onClick={()=>{setShowSettings(false);loadWines();showToast("Settings saved");}} style={{width:"100%",background:"#1a1a1a",border:"none",color:"#fff",borderRadius:12,padding:"13px 0",fontSize:13,fontWeight:600}}>Save & Sync</button>
+          </div>
+        </div>
+      )}
+      {showActivity&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setShowActivity(false)}>
+          <div style={{background:"#fff",borderRadius:"20px 20px 0 0",width:"100%",maxWidth:640,maxHeight:"85vh",overflow:"auto",padding:"8px 20px 48px"}} onClick={e=>e.stopPropagation()}>
+            <div style={{width:36,height:4,background:"#e0e0e0",borderRadius:2,margin:"12px auto 20px"}}/>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:22}}>📋 Activity</h2>
+              <button onClick={()=>setShowActivity(false)} style={{background:"#f5f5f5",border:"none",borderRadius:"50%",width:32,height:32,fontSize:18,color:"#888"}}>×</button>
+            </div>
+            {activity.length===0 ? (
+              <div style={{textAlign:"center",padding:"40px 0",color:"#bbb"}}>
+                <div style={{fontSize:36,marginBottom:8}}>📋</div>
+                <div style={{fontFamily:"'DM Serif Display',serif",fontSize:16,color:"#aaa"}}>No activity yet</div>
+              </div>
+            ) : (
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {activity.map(a=>{
+                  const icon = a.type==="drank"?"🍷":a.type==="added"?"➕":a.type==="deleted"?"🗑️":"✏️";
+                  const color = a.type==="drank"?"#c0392b":a.type==="added"?"#27ae60":a.type==="deleted"?"#e74c3c":"#888";
+                  return(
+                    <div key={a.id} style={{display:"flex",gap:12,alignItems:"center",padding:"12px 14px",background:"#fafafa",borderRadius:12}}>
+                      <span style={{fontSize:20,flexShrink:0}}>{icon}</span>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontWeight:600,fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.wineName}{a.vintage?` · ${a.vintage}`:""}</div>
+                        <div style={{fontSize:11,color:"#aaa",marginTop:2}}>{a.detail}</div>
+                      </div>
+                      <div style={{fontSize:11,color:"#bbb",flexShrink:0}}>{a.date}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       )}
