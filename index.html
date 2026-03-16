@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <title>Cave à Vin</title>
+  <title>MJ Cellar</title>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
-  <meta name="apple-mobile-web-app-title" content="Cave à Vin"/>
+  <meta name="apple-mobile-web-app-title" content="MJ Cellar"/>
   <meta name="theme-color" content="#ffffff"/>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -260,6 +260,51 @@ const WineModal = ({ wine, onClose, onSave, onDelete }) => {
   );
 };
 
+const LocationBadge = ({ location }) => {
+  if(!location) return null;
+  const loc = location.toString().trim();
+  // 7 digit alphanumeric = long term cellar = stop sign
+  if(/^[A-Za-z0-9]{7}$/.test(loc)) {
+    return (
+      <div style={{flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",gap:2,minWidth:48}}>
+        <div style={{width:32,height:32,background:"#e74c3c",clipPath:"polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <span style={{color:"#fff",fontSize:8,fontWeight:700,letterSpacing:"0.05em"}}>STOP</span>
+        </div>
+        <span style={{fontSize:9,color:"#aaa",fontWeight:500,maxWidth:48,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textAlign:"center"}}>{loc}</span>
+      </div>
+    );
+  }
+  // VW = blue circle
+  if(loc.toUpperCase()==="VW") {
+    return (
+      <div style={{flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",gap:2,minWidth:48}}>
+        <div style={{width:36,height:36,borderRadius:"50%",background:"#2980b9",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <span style={{color:"#fff",fontSize:11,fontWeight:700}}>VW</span>
+        </div>
+      </div>
+    );
+  }
+  // H = green circle
+  if(loc.toUpperCase()==="H") {
+    return (
+      <div style={{flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",gap:2,minWidth:48}}>
+        <div style={{width:36,height:36,borderRadius:"50%",background:"#27ae60",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <span style={{color:"#fff",fontSize:14,fontWeight:700}}>H</span>
+        </div>
+      </div>
+    );
+  }
+  // Default — just show text
+  return (
+    <div style={{flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",gap:2,minWidth:48}}>
+      <div style={{width:32,height:32,borderRadius:8,background:"#f5f5f5",display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <span style={{color:"#888",fontSize:9,fontWeight:600,textAlign:"center",padding:2}}>{loc.slice(0,6)}</span>
+      </div>
+      <span style={{fontSize:9,color:"#aaa",fontWeight:500}}>Loc</span>
+    </div>
+  );
+};
+
 function App() {
   const [wines, setWines] = useState([]);
   const [activity, setActivity] = useState(()=>{
@@ -267,11 +312,34 @@ function App() {
   });
   const [showActivity, setShowActivity] = useState(false);
 
+  const saveActivity = async (entries) => {
+    try {
+      localStorage.setItem("cav_activity", JSON.stringify(entries));
+      const token = getToken();
+      if(!token) return;
+      const getRes = await fetch(GITHUB_ACTIVITY_API, {
+        headers: { "Authorization": `token ${token}`, "Accept": "application/vnd.github.v3+json" }
+      });
+      let sha = null;
+      if(getRes.ok) { const d = await getRes.json(); sha = d.sha; }
+      const body = {
+        message: "Update activity",
+        content: btoa(unescape(encodeURIComponent(JSON.stringify(entries, null, 2)))),
+        ...(sha ? {sha} : {})
+      };
+      await fetch(GITHUB_ACTIVITY_API, {
+        method: "PUT",
+        headers: { "Authorization": `token ${token}`, "Accept": "application/vnd.github.v3+json", "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+    } catch(e) { console.error("Activity save failed:", e); }
+  };
+
   const logActivity = (type, wine, detail="") => {
     const entry = { id:Date.now(), type, wineName:wine.name, vintage:wine.vintage, detail, date:new Date().toLocaleDateString() };
     setActivity(prev => {
-      const updated = [entry, ...prev].slice(0,100);
-      try{ localStorage.setItem("cav_activity", JSON.stringify(updated)); }catch(e){}
+      const updated = [entry, ...prev];
+      saveActivity(updated);
       return updated;
     });
   };
@@ -282,13 +350,15 @@ function App() {
   const GITHUB_REPO = "manijoseph-wq/wine";
   const GITHUB_FILE = "wines.json";
   const GITHUB_API = `https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`;
+  const GITHUB_ACTIVITY_API = `https://api.github.com/repos/${GITHUB_REPO}/contents/activity.json`;
   const getToken = () => localStorage.getItem("cav_gh_token")||"";
 
   const loadWines = async () => {
     try {
-      const res = await fetch(GITHUB_API, {
-        headers: { "Authorization": `token ${getToken()}`, "Accept": "application/vnd.github.v3+json" }
-      });
+      const token = getToken();
+      const headers = { "Authorization": `token ${token}`, "Accept": "application/vnd.github.v3+json" };
+      // Load wines
+      const res = await fetch(GITHUB_API, { headers });
       if(res.ok) {
         const data = await res.json();
         const wines = JSON.parse(atob(data.content.replace(/\n/g,"")));
@@ -296,14 +366,22 @@ function App() {
         localStorage.setItem("cav_wines", JSON.stringify(wines));
         localStorage.setItem("cav_sha", data.sha);
       } else if(res.status === 404) {
-        // File doesn't exist yet, start empty
         const cached = localStorage.getItem("cav_wines");
         if(cached) setWines(JSON.parse(cached));
       }
+      // Load activity
+      const actRes = await fetch(GITHUB_ACTIVITY_API, { headers });
+      if(actRes.ok) {
+        const actData = await actRes.json();
+        const entries = JSON.parse(atob(actData.content.replace(/\n/g,"")));
+        setActivity(entries);
+        localStorage.setItem("cav_activity", JSON.stringify(entries));
+      }
     } catch(e) {
-      // Offline — use local cache
       const cached = localStorage.getItem("cav_wines");
       if(cached) setWines(JSON.parse(cached));
+      const cachedAct = localStorage.getItem("cav_activity");
+      if(cachedAct) setActivity(JSON.parse(cachedAct));
     }
     setLoading(false);
   };
@@ -364,6 +442,7 @@ function App() {
     if(sortBy==="vintage") return (b.vintage||0)-(a.vintage||0);
     if(sortBy==="rating") return (b.rating||0)-(a.rating||0);
     if(sortBy==="value") return (b.currentValue||0)-(a.currentValue||0);
+    if(sortBy==="location") return (a.location||"").localeCompare(b.location||"");
     return 0;
   }),[wines,search,filterType,sortBy]);
 
@@ -435,7 +514,7 @@ function App() {
       <div style={{background:"#fff",borderBottom:"1px solid #f0f0f0",padding:"16px 18px 14px",position:"sticky",top:0,zIndex:100}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
           <div>
-            <h1 style={{fontFamily:"'DM Serif Display',serif",fontSize:26,lineHeight:1}}>Cave à Vin</h1>
+            <h1 style={{fontFamily:"'DM Serif Display',serif",fontSize:26,lineHeight:1}}>MJ Cellar</h1>
             <p style={{fontSize:11,color:"#bbb",marginTop:2}}>{stats.wines} wines · {stats.bottles} bottles{stats.value>0?` · $${stats.value.toLocaleString()} value`:""}{syncing?" · saving…":""}</p>
           </div>
           <div style={{display:"flex",gap:8}}>
@@ -456,7 +535,7 @@ function App() {
 
       <div style={{display:"flex",gap:6,padding:"10px 18px",alignItems:"center",overflowX:"auto"}}>
         <span style={{fontSize:11,color:"#bbb",flexShrink:0}}>Sort:</span>
-        {[["name","Name"],["vintage","Vintage"],["rating","Rating"],["value","Value"]].map(([v,l])=>(
+        {[["name","Name"],["vintage","Vintage"],["rating","Rating"],["value","Value"],["location","Location"]].map(([v,l])=>(
           <button key={v} onClick={()=>setSortBy(v)} style={{background:sortBy===v?"#1a1a1a":"transparent",color:sortBy===v?"#fff":"#888",border:sortBy===v?"none":"1px solid #e8e8e8",borderRadius:20,padding:"4px 12px",fontSize:11,fontWeight:sortBy===v?600:400,flexShrink:0}}>{l}</button>
         ))}
         <span style={{marginLeft:"auto",fontSize:11,color:"#bbb",flexShrink:0}}>{filtered.length} wine{filtered.length!==1?"s":""}</span>
@@ -498,10 +577,13 @@ function App() {
                       <span style={{fontSize:11,color:"#888"}}>🍾 {wine.bottles||0} bottle{(wine.bottles||0)!==1?"s":""} remaining</span>
                     </div>
                   </div>
-                  <button onClick={(e)=>drinkBottle(wine,e)} style={{background:"#fef5f5",border:"none",borderRadius:12,padding:"10px 10px",flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",gap:2,minWidth:48}}>
-                    <span style={{fontSize:20}}>🍷</span>
-                    <span style={{fontSize:9,color:"#c0392b",fontWeight:600}}>Drink</span>
-                  </button>
+                  <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                    <LocationBadge location={wine.location}/>
+                    <button onClick={(e)=>drinkBottle(wine,e)} style={{background:"#fef5f5",border:"none",borderRadius:12,padding:"10px 10px",flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",gap:2,minWidth:48}}>
+                      <span style={{fontSize:20}}>🍷</span>
+                      <span style={{fontSize:9,color:"#c0392b",fontWeight:600}}>Drink</span>
+                    </button>
+                  </div>
                 </div>
               );
             })}
