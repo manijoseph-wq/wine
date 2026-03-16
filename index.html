@@ -213,7 +213,7 @@ const WineModal = ({ wine, onClose, onSave, onDelete }) => {
                 <a href={`https://www.wine-searcher.com/find/${encodeURIComponent((wine.name||"")+(wine.vintage?` ${wine.vintage}`:""))}`} target="_blank" rel="noopener noreferrer" style={{flex:1,background:"#f0f7ff",color:"#2980b9",borderRadius:12,padding:"13px 0",fontSize:13,fontWeight:600,textAlign:"center",textDecoration:"none",display:"block"}}>
                   🔍 Wine Searcher
                 </a>
-                <a href={`https://www.cellartracker.com/wines.asp?szSearch=${encodeURIComponent((wine.name||"")+(wine.vintage?` ${wine.vintage}`:""))}`} target="_blank" rel="noopener noreferrer" style={{flex:1,background:"#f5f0ff",color:"#8e44ad",borderRadius:12,padding:"13px 0",fontSize:13,fontWeight:600,textAlign:"center",textDecoration:"none",display:"block"}}>
+                <a href={`https://www.google.com/search?q=site:cellartracker.com+${encodeURIComponent((wine.name||"")+(wine.vintage?` ${wine.vintage}`:""))}`} target="_blank" rel="noopener noreferrer" style={{flex:1,background:"#f5f0ff",color:"#8e44ad",borderRadius:12,padding:"13px 0",fontSize:13,fontWeight:600,textAlign:"center",textDecoration:"none",display:"block"}}>
                   📓 CellarTracker
                 </a>
               </div>
