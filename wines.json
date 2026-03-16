@@ -306,16 +306,16 @@
     "notes": ""
   },
   {
+    "type": "Red",
     "id": 1773631250801,
     "name": "Dominus Estate Christian Moueix",
     "producer": "",
     "region": "",
     "country": "",
     "vintage": 2002,
-    "type": "Red",
     "grape": "",
     "bottles": 1,
-    "location": "",
+    "location": "S084552",
     "purchasePrice": null,
     "currentValue": null,
     "drinkFrom": null,
