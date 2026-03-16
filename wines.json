@@ -810,16 +810,16 @@
     "notes": ""
   },
   {
+    "type": "Red",
     "id": 1773631250829,
     "name": "Tenuta San Guido Sassicaia Bolgheri",
     "producer": "",
     "region": "",
     "country": "",
     "vintage": 2018,
-    "type": "Red",
     "grape": "",
     "bottles": 1,
-    "location": "",
+    "location": "S103348",
     "purchasePrice": null,
     "currentValue": null,
     "drinkFrom": null,
