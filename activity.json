@@ -1,5 +1,13 @@
 [
   {
+    "id": 1773735776398,
+    "type": "drank",
+    "wineName": "Tignanello",
+    "vintage": 2011,
+    "detail": "1 bottle enjoyed · 0 remaining",
+    "date": "17/03/2026"
+  },
+  {
     "id": 1773735752303,
     "type": "deleted",
     "wineName": "Tignanello",
