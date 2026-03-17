@@ -1,5 +1,13 @@
 [
   {
+    "id": 1773735783982,
+    "type": "deleted",
+    "wineName": "Tignanello",
+    "vintage": 2011,
+    "detail": "Removed from cellar",
+    "date": "17/03/2026"
+  },
+  {
     "id": 1773735776398,
     "type": "drank",
     "wineName": "Tignanello",
