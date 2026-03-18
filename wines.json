@@ -1908,13 +1908,13 @@
     "notes": ""
   },
   {
+    "type": "Red",
     "id": 1773796351750,
     "name": "Bookster",
     "producer": "",
     "region": "California",
     "country": "USA",
-    "vintage": null,
-    "type": "Red",
+    "vintage": 2005,
     "grape": "Cabernet Sauvignon",
     "bottles": 2,
     "location": "H",
