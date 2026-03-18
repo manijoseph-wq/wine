@@ -522,16 +522,16 @@
     "notes": ""
   },
   {
+    "type": "Red",
     "id": 1773631250813,
     "name": "Chateau Pichon-Longueville au Baron de Pichon-Longueville",
     "producer": "",
     "region": "",
     "country": "",
     "vintage": 2012,
-    "type": "Red",
     "grape": "",
     "bottles": 2,
-    "location": "",
+    "location": "S085562",
     "purchasePrice": null,
     "currentValue": null,
     "drinkFrom": null,
