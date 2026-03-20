@@ -1,5 +1,13 @@
 [
   {
+    "id": 1773999133614,
+    "type": "drank",
+    "wineName": "Showket Red",
+    "vintage": 2004,
+    "detail": "1 bottle enjoyed · 1 remaining",
+    "date": "20/03/2026"
+  },
+  {
     "id": 1773798353136,
     "type": "edited",
     "wineName": "Ornellaia Bolgheri Superiore",
@@ -468,7 +476,7 @@
     "type": "drank",
     "wineName": "Tignanello",
     "vintage": 2011,
-    "detail": "1 bottle enjoyed ÃÂ· 0 remaining",
+    "detail": "1 bottle enjoyed ÃÂÃÂ· 0 remaining",
     "date": "17/03/2026"
   },
   {
