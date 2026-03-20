@@ -1350,15 +1350,15 @@
     "notes": ""
   },
   {
+    "type": "Red",
     "id": 1773632055626,
     "name": "Showket Red",
     "producer": "Asante Sana",
     "region": "",
     "country": "",
     "vintage": 2004,
-    "type": "Red",
     "grape": "",
-    "bottles": 2,
+    "bottles": 1,
     "location": "",
     "purchasePrice": null,
     "currentValue": null,
