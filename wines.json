@@ -2286,15 +2286,15 @@
     "notes": ""
   },
   {
+    "type": "Red",
     "id": 1773796351772,
     "name": "Chateau Pape Clement",
     "producer": "",
     "region": "Pessac-Leognan",
     "country": "France",
     "vintage": 2002,
-    "type": "Red",
     "grape": "Cabernet Sauvignon",
-    "bottles": 10,
+    "bottles": 4,
     "location": "H",
     "purchasePrice": null,
     "currentValue": null,
