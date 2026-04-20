@@ -1746,15 +1746,15 @@
     "notes": ""
   },
   {
+    "type": "Red",
     "id": 1773796351741,
     "name": "Chateau de Beaucastel",
     "producer": "",
     "region": "Rhone",
     "country": "France",
     "vintage": 2015,
-    "type": "Red",
     "grape": "Grenache Blend",
-    "bottles": 4,
+    "bottles": 1,
     "location": "H",
     "purchasePrice": null,
     "currentValue": null,
