@@ -1,5 +1,13 @@
 [
   {
+    "id": 1776727184320,
+    "type": "drank",
+    "wineName": "Gallica Cabernet Sauvignon",
+    "vintage": 2013,
+    "detail": "1 bottle enjoyed · 0 remaining",
+    "date": "21/04/2026"
+  },
+  {
     "id": 1776727129870,
     "type": "deleted",
     "wineName": "Gallica Cabernet Sauvignon",
