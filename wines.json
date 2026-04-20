@@ -2160,24 +2160,6 @@
     "notes": ""
   },
   {
-    "id": 1773796351764,
-    "name": "Calon Segur",
-    "producer": "",
-    "region": "St. Estephe",
-    "country": "France",
-    "vintage": 2010,
-    "type": "Red",
-    "grape": "Cabernet Sauvignon",
-    "bottles": 3,
-    "location": "H",
-    "purchasePrice": null,
-    "currentValue": null,
-    "drinkFrom": null,
-    "drinkUntil": null,
-    "rating": null,
-    "notes": ""
-  },
-  {
     "id": 1773796351765,
     "name": "Chateau Gloria",
     "producer": "",
@@ -2449,7 +2431,7 @@
   },
   {
     "id": 1776567670844,
-    "name": "Domaine Comtes Georges de Vogüé",
+    "name": "Domaine Comtes Georges de VogÃ¼Ã©",
     "producer": "Chambolle-Musigny",
     "region": "Burgundy",
     "country": "France",
@@ -2485,7 +2467,7 @@
   },
   {
     "id": 1776567670846,
-    "name": "Alain Hudelot-Noëllat",
+    "name": "Alain Hudelot-NoÃ«llat",
     "producer": "Chambolle-Musigny Grand Cru",
     "region": "Burgundy",
     "country": "France",
@@ -2539,7 +2521,7 @@
   },
   {
     "id": 1776567670849,
-    "name": "Domaine Méo-Camuzet",
+    "name": "Domaine MÃ©o-Camuzet",
     "producer": "Clos de Vougeot Grand Cru",
     "region": "Burgundy",
     "country": "France",
@@ -2557,7 +2539,7 @@
   },
   {
     "id": 1776567670850,
-    "name": "Bouchard Père & Fils",
+    "name": "Bouchard PÃ¨re & Fils",
     "producer": "Chapelle-Chambertin Grand Cru",
     "region": "Burgundy",
     "country": "France",
@@ -2629,7 +2611,7 @@
   },
   {
     "id": 1776567670854,
-    "name": "Alain Hudelot-Noëllat",
+    "name": "Alain Hudelot-NoÃ«llat",
     "producer": "Nuits-Saint-Georges 1er Cru Les Murgers",
     "region": "Burgundy",
     "country": "France",
@@ -2647,7 +2629,7 @@
   },
   {
     "id": 1776567670855,
-    "name": "Frédéric Esmonin",
+    "name": "FrÃ©dÃ©ric Esmonin",
     "producer": "Ruchottes-Chambertin Grand Cru",
     "region": "Burgundy",
     "country": "France",
@@ -2666,7 +2648,7 @@
   {
     "id": 1776567670856,
     "name": "Robert Groffier",
-    "producer": "Chambertin Clos de Bèze Grand Cru",
+    "producer": "Chambertin Clos de BÃ¨ze Grand Cru",
     "region": "Burgundy",
     "country": "France",
     "vintage": 1999,
@@ -2684,7 +2666,7 @@
   {
     "id": 1776567670857,
     "name": "Domaine Michel Gros",
-    "producer": "Vosne-Romanée 1er Cru Clos des Réas",
+    "producer": "Vosne-RomanÃ©e 1er Cru Clos des RÃ©as",
     "region": "Burgundy",
     "country": "France",
     "vintage": 1986,
@@ -2702,7 +2684,7 @@
   {
     "id": 1776567670858,
     "name": "Sylvain Cathiard",
-    "producer": "Vosne-Romanée 1er Cru Les Suchots",
+    "producer": "Vosne-RomanÃ©e 1er Cru Les Suchots",
     "region": "Burgundy",
     "country": "France",
     "vintage": 2001,
@@ -2755,8 +2737,8 @@
   },
   {
     "id": 1776567670861,
-    "name": "Dom Pérignon",
-    "producer": "Champagne Millésimé",
+    "name": "Dom PÃ©rignon",
+    "producer": "Champagne MillÃ©simÃ©",
     "region": "Champagne",
     "country": "France",
     "vintage": 2006,
@@ -2791,8 +2773,8 @@
   },
   {
     "id": 1776567670863,
-    "name": "Château Cos d'Estournel",
-    "producer": "Saint-Estèphe",
+    "name": "ChÃ¢teau Cos d'Estournel",
+    "producer": "Saint-EstÃ¨phe",
     "region": "Bordeaux",
     "country": "France",
     "vintage": 2010,
@@ -2809,7 +2791,7 @@
   },
   {
     "id": 1776567670864,
-    "name": "Château Pichon-Longueville Baron",
+    "name": "ChÃ¢teau Pichon-Longueville Baron",
     "producer": "Pauillac",
     "region": "Bordeaux",
     "country": "France",
@@ -2827,7 +2809,7 @@
   },
   {
     "id": 1776567670865,
-    "name": "Château Beychevelle",
+    "name": "ChÃ¢teau Beychevelle",
     "producer": "Saint-Julien",
     "region": "Bordeaux",
     "country": "France",
@@ -2845,8 +2827,8 @@
   },
   {
     "id": 1776567670866,
-    "name": "Château Tertre Roteboeuf",
-    "producer": "Saint-Émilion Grand Cru",
+    "name": "ChÃ¢teau Tertre Roteboeuf",
+    "producer": "Saint-Ãmilion Grand Cru",
     "region": "Bordeaux",
     "country": "France",
     "vintage": 2006,
@@ -2863,8 +2845,8 @@
   },
   {
     "id": 1776567670867,
-    "name": "Château Tertre Roteboeuf",
-    "producer": "Saint-Émilion Grand Cru",
+    "name": "ChÃ¢teau Tertre Roteboeuf",
+    "producer": "Saint-Ãmilion Grand Cru",
     "region": "Bordeaux",
     "country": "France",
     "vintage": 1995,
@@ -2882,7 +2864,7 @@
   {
     "id": 1776567670868,
     "name": "Le Clarence de Haut-Brion",
-    "producer": "Pessac-Léognan",
+    "producer": "Pessac-LÃ©ognan",
     "region": "Bordeaux",
     "country": "France",
     "vintage": 2009,
@@ -2900,7 +2882,7 @@
   {
     "id": 1776567670869,
     "name": "La Chapelle de La Mission Haut-Brion",
-    "producer": "Pessac-Léognan",
+    "producer": "Pessac-LÃ©ognan",
     "region": "Bordeaux",
     "country": "France",
     "vintage": 2010,
@@ -2917,7 +2899,7 @@
   },
   {
     "id": 1776567670870,
-    "name": "Château Ducru-Beaucaillou",
+    "name": "ChÃ¢teau Ducru-Beaucaillou",
     "producer": "Saint-Julien",
     "region": "Bordeaux",
     "country": "France",
@@ -3187,7 +3169,7 @@
   },
   {
     "id": 1776567670885,
-    "name": "Peñas Aladas",
+    "name": "PeÃ±as Aladas",
     "producer": "Ribera del Duero Gran Reserva",
     "region": "Ribera del Duero",
     "country": "Spain",
