@@ -1,5 +1,37 @@
 [
   {
+    "id": 1777252759319,
+    "type": "deleted",
+    "wineName": "Dumol Pinot Noir",
+    "vintage": 2016,
+    "detail": "Removed from cellar",
+    "date": "27/04/2026"
+  },
+  {
+    "id": 1776823289532,
+    "type": "added",
+    "wineName": "Deutz Amour de Deutz Rose Brut Millesime",
+    "vintage": 2008,
+    "detail": "4 bottles added",
+    "date": "22/04/2026"
+  },
+  {
+    "id": 1776823289532,
+    "type": "added",
+    "wineName": "Dom Perignon Brut",
+    "vintage": 2009,
+    "detail": "1 bottle added",
+    "date": "22/04/2026"
+  },
+  {
+    "id": 1776823289532,
+    "type": "added",
+    "wineName": "Dom Perignon Brut",
+    "vintage": 2006,
+    "detail": "1 bottle added",
+    "date": "22/04/2026"
+  },
+  {
     "id": 1776823289531,
     "type": "added",
     "wineName": "Fortunate Son The Diplomat",
