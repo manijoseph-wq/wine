@@ -882,15 +882,15 @@
     "notes": ""
   },
   {
+    "type": "Red",
     "id": 1773632055601,
     "name": "Littorai Pinot Noir",
     "producer": "Les Larmes",
     "region": "",
     "country": "",
     "vintage": 2015,
-    "type": "Red",
     "grape": "",
-    "bottles": 2,
+    "bottles": 1,
     "location": "",
     "purchasePrice": null,
     "currentValue": null,
