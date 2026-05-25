@@ -1098,15 +1098,15 @@
     "notes": ""
   },
   {
+    "type": "Red",
     "id": 1773632055618,
     "name": "Gallica Cabernet Sauvignon",
     "producer": "Oakville",
     "region": "",
     "country": "",
     "vintage": 2012,
-    "type": "Red",
     "grape": "",
-    "bottles": 2,
+    "bottles": 1,
     "location": "",
     "purchasePrice": null,
     "currentValue": null,
