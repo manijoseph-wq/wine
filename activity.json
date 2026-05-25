@@ -1,5 +1,13 @@
 [
   {
+    "id": 1779750879740,
+    "type": "edited",
+    "wineName": "Gallica Cabernet Sauvignon",
+    "vintage": 2012,
+    "detail": "Details updated",
+    "date": "26/05/2026"
+  },
+  {
     "id": 1779750826309,
     "type": "deleted",
     "wineName": "Continuum",
