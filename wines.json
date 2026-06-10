@@ -1296,15 +1296,15 @@
     "notes": ""
   },
   {
+    "type": "Red",
     "id": 1773796351730,
     "name": "Malartic Lagraviere",
     "producer": "",
     "region": "Pessac-Leognan",
     "country": "France",
     "vintage": 2009,
-    "type": "Red",
     "grape": "Cabernet Sauvignon",
-    "bottles": 3,
+    "bottles": 2,
     "location": "H",
     "purchasePrice": null,
     "currentValue": null,
