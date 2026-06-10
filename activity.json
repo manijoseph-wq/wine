@@ -1,5 +1,13 @@
 [
   {
+    "id": 1781073013353,
+    "type": "edited",
+    "wineName": "Inglenook Cabernet Sauvignon",
+    "vintage": 2012,
+    "detail": "Details updated",
+    "date": "10/06/2026"
+  },
+  {
     "id": 1781072996757,
     "type": "deleted",
     "wineName": "Fortunate Son Cabernet Sauvignon",
