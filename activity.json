@@ -1,5 +1,13 @@
 [
   {
+    "id": 1781073120920,
+    "type": "deleted",
+    "wineName": "Tierra Roja Cabernet Sauvignon",
+    "vintage": 2005,
+    "detail": "Removed from cellar",
+    "date": "10/06/2026"
+  },
+  {
     "id": 1781073074502,
     "type": "edited",
     "wineName": "Malartic Lagraviere",
