@@ -1854,24 +1854,6 @@
     "notes": ""
   },
   {
-    "id": 1773796351768,
-    "name": "Pauillac",
-    "producer": "",
-    "region": "Pauillac",
-    "country": "France",
-    "vintage": 2015,
-    "type": "Red",
-    "grape": "Cabernet Sauvignon",
-    "bottles": 1,
-    "location": "H",
-    "purchasePrice": null,
-    "currentValue": null,
-    "drinkFrom": null,
-    "drinkUntil": null,
-    "rating": null,
-    "notes": ""
-  },
-  {
     "id": 1773796351770,
     "name": "Penas Aladas",
     "producer": "",
