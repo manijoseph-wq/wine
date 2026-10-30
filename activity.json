@@ -1,5 +1,13 @@
 [
   {
+    "id": 1793318961668,
+    "type": "edited",
+    "wineName": "Brunello di Montalcino",
+    "vintage": 2016,
+    "detail": "Details updated",
+    "date": "30/10/2026"
+  },
+  {
     "id": 1786008056692,
     "type": "deleted",
     "wineName": "Pauillac",
