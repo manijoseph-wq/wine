@@ -1,5 +1,13 @@
 [
   {
+    "id": 1793318996406,
+    "type": "deleted",
+    "wineName": "Chateau Gloria",
+    "vintage": 2010,
+    "detail": "Removed from cellar",
+    "date": "30/10/2026"
+  },
+  {
     "id": 1793318972460,
     "type": "edited",
     "wineName": "Cain Five",
