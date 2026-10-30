@@ -1,5 +1,13 @@
 [
   {
+    "id": 1793319112598,
+    "type": "deleted",
+    "wineName": "Silver Oak",
+    "vintage": 1991,
+    "detail": "Removed from cellar",
+    "date": "30/10/2026"
+  },
+  {
     "id": 1793319077472,
     "type": "edited",
     "wineName": "Malartic Lagraviere",
