@@ -1296,15 +1296,15 @@
     "notes": ""
   },
   {
+    "type": "Red",
     "id": 1773796351732,
     "name": "Brunello di Montalcino",
     "producer": "",
     "region": "Brunello",
     "country": "Italy",
     "vintage": 2016,
-    "type": "Red",
     "grape": "Sangiovese",
-    "bottles": 4,
+    "bottles": 3,
     "location": "H",
     "purchasePrice": null,
     "currentValue": null,
